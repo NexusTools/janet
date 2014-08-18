@@ -12,6 +12,7 @@ import net.nexustools.concurrent.PropMap;
 import net.nexustools.io.DataInputStream;
 import net.nexustools.io.DataOutputStream;
 import net.nexustools.io.net.Client;
+import net.nexustools.io.net.ClientListener;
 import net.nexustools.io.net.Packet;
 import net.nexustools.io.net.PacketRegistry;
 import net.nexustools.io.net.Server;
@@ -53,6 +54,5 @@ public class WorkClient<W extends WorkPacket, P extends Packet, S extends WorkSe
     public W takeByID(long workID) { 
         return sentWork.take(workID);
     }
-    
     
 }

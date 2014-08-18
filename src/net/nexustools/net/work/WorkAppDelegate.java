@@ -15,15 +15,10 @@ import net.nexustools.io.net.ServerAppDelegate;
  *
  * @author kate
  */
-public class WorkAppDelegate<C extends WorkClient, S extends WorkServer> extends ServerAppDelegate<C, S> {
+public abstract class WorkAppDelegate<C extends WorkClient, S extends WorkServer> extends ServerAppDelegate<C, S> {
 
     public WorkAppDelegate(String[] args, String name, String organization) {
         super(args, name, organization);
-    }
-
-    @Override
-    protected void populate(PacketRegistry registery) {
-        
     }
 
     @Override
