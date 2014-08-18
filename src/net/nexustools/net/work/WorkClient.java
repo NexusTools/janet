@@ -31,9 +31,17 @@ public class WorkClient<W extends WorkPacket, P extends Packet, S extends WorkSe
     }
     public WorkClient(String name, final Pair<DataInputStream,DataOutputStream> socket, PacketRegistry packetRegistry) {
         super(name, socket, packetRegistry);
+        init();
     }
     public WorkClient(String name, String host, int port, Protocol protocol, PacketRegistry packetRegistry) throws IOException {
         super(name, host, port, protocol, packetRegistry);
+        init();
+    }
+    
+    private void init() {
+        int count = runQueue.countThreads();
+        while(count-- > 0)
+            send((P)new RequestWorkPacket());
     }
     
     public void send(W work) {
