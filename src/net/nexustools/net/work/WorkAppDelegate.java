@@ -20,6 +20,8 @@ public abstract class WorkAppDelegate<C extends WorkClient, S extends WorkServer
     public WorkAppDelegate(String[] args, String name, String organization) {
         super(args, name, organization);
     }
+    
+    public abstract WorkPacket nextWork(C client);
 
     @Override
     protected C createClient(String host, int port) throws IOException {
@@ -31,7 +33,7 @@ public abstract class WorkAppDelegate<C extends WorkClient, S extends WorkServer
         return (S)new WorkServer(port, Protocol.TCP, packetRegistry) {
             @Override
             public WorkPacket nextWork(WorkClient client) {
-                throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+                return WorkAppDelegate.this.nextWork((C)client);
             }
         };
     }
