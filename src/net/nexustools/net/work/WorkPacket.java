@@ -23,6 +23,9 @@ public abstract class WorkPacket<R extends ResponsePacket, C extends WorkClient,
         response.workId = workId;
         Logger.quote("Finished Work", this);
         client.send(response);
+        
+        Logger.quote("Requesting Work", this);
+        client.send(new RequestWorkPacket());
     }
 
     @Override
