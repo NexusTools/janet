@@ -7,6 +7,7 @@
 package net.nexustools.net.work;
 
 import java.io.IOException;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 import net.nexustools.concurrent.PropMap;
 import net.nexustools.io.DataInputStream;
@@ -15,7 +16,6 @@ import net.nexustools.io.net.Client;
 import net.nexustools.io.net.ClientListener;
 import net.nexustools.io.net.Packet;
 import net.nexustools.io.net.PacketRegistry;
-import net.nexustools.io.net.Server;
 import net.nexustools.io.net.Server.Protocol;
 import net.nexustools.utils.Pair;
 import net.nexustools.utils.log.Logger;
@@ -35,8 +35,13 @@ public class WorkClient<W extends WorkPacket, P extends Packet, S extends WorkSe
             public void clientConnected(ClientListener.ClientEvent clientConnectedEvent) {}
             @Override
             public void clientDisconnected(ClientListener.ClientEvent clientConnectedEvent) {
-                for(Pair<Long, W> work : sentWork)
-                    server.pushWork(work.v);
+                Map<Long, W> remaining = sentWork.take();
+                
+                if(remaining.size() > 0) {
+                    Logger.info("Recovering" + remaining.size() + "Work Entries");
+                    for(Map.Entry<Long, W> work : remaining.entrySet())
+                        server.pushWork(work.getValue());
+                }
             }
         });
     }
@@ -60,7 +65,7 @@ public class WorkClient<W extends WorkPacket, P extends Packet, S extends WorkSe
         super.send((P)work); // incase W and P overlap
     }
     
-    W takeByID(long workID) { 
+    W takeByID(long workID) {
         return sentWork.take(workID);
     }
     

@@ -48,7 +48,10 @@ public abstract class WorkAppDelegate<C extends WorkClient, S extends WorkServer
         return (S)new WorkServer(port, Protocol.TCP, packetRegistry) {
             @Override
             public WorkPacket nextWork(WorkClient client) {
-                return WorkAppDelegate.this.nextWork((C)client);
+                WorkPacket work = super.nextWork(client);
+                if(work == null)
+                    work = WorkAppDelegate.this.nextWork((C)client);
+                return work;
             }
             @Override
             public WorkClient createClient(Pair socket) {
