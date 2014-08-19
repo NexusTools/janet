@@ -38,7 +38,7 @@ public class WorkClient<W extends WorkPacket, P extends Packet, S extends WorkSe
                 Map<Long, W> remaining = sentWork.take();
                 
                 if(remaining.size() > 0) {
-                    Logger.info("Recovering" + remaining.size() + "Work Entries");
+                    Logger.info("Recovering", remaining.size(), "Work Entries");
                     for(Map.Entry<Long, W> work : remaining.entrySet())
                         server.pushWork(work.getValue());
                 }
