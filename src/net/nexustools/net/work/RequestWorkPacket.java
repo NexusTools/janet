@@ -6,10 +6,6 @@
 
 package net.nexustools.net.work;
 
-import java.io.IOException;
-import net.nexustools.io.DataInputStream;
-import net.nexustools.io.DataOutputStream;
-import net.nexustools.io.net.Packet;
 import net.nexustools.io.net.SimplePacket;
 
 /**

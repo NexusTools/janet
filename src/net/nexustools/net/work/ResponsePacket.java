@@ -20,7 +20,7 @@ public abstract class ResponsePacket<W extends WorkPacket, C extends WorkClient<
     protected abstract void handleResponse(C client, S server, W work);
 
     @Override
-    public void read(DataInputStream dataInput, C client) throws UnsupportedOperationException, IOException, AdaptorException {
+    public void read(DataInputStream dataInput, C client) throws UnsupportedOperationException, IOException {
         super.read(dataInput, client);
         workRequest = client.takeByID(workId);
     }

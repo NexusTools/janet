@@ -27,13 +27,13 @@ public abstract class BaseWorkPacket<C extends WorkClient, S extends WorkServer>
     }
 
     @Override
-    public void read(DataInputStream dataInput, C client) throws UnsupportedOperationException, IOException, AdaptorException {
+    public void read(DataInputStream dataInput, C client) throws UnsupportedOperationException, IOException {
         // Reads @StreamField fields
         super.read(dataInput, client);
     }
 
     @Override
-    public void write(DataOutputStream dataOutput, C client) throws UnsupportedOperationException, IOException, AdaptorException {
+    public void write(DataOutputStream dataOutput, C client) throws UnsupportedOperationException, IOException {
         // Writes @StreamField CΩ
         super.write(dataOutput, client);
     }

@@ -11,6 +11,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import net.nexustools.io.DataInputStream;
 import net.nexustools.io.DataOutputStream;
+import net.nexustools.io.net.PacketRegistry;
 import net.nexustools.io.net.Server.Protocol;
 import net.nexustools.io.net.ServerAppDelegate;
 import net.nexustools.utils.Pair;
@@ -27,6 +28,11 @@ public abstract class WorkAppDelegate<C extends WorkClient, S extends WorkServer
     
     public abstract WorkPacket nextWork(C client);
 
+    @Override
+    protected void populate(PacketRegistry registry) throws NoSuchMethodException{
+        registry.register(RequestWorkPacket.class);
+    }
+    
     @Override
     protected C createClient(String host, int port) throws IOException {
         return (C)new WorkClient(name + "-WorkClient", host, port, Protocol.TCP, packetRegistry);
