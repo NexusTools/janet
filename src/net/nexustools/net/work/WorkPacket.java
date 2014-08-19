@@ -6,9 +6,7 @@
 
 package net.nexustools.net.work;
 
-import net.nexustools.data.annote.FieldStream;
-import net.nexustools.io.net.Client;
-import net.nexustools.io.net.Packet;
+import net.nexustools.utils.log.Logger;
 
 /**
  *
@@ -20,7 +18,11 @@ public abstract class WorkPacket<R extends ResponsePacket, C extends WorkClient,
     
     @Override
     protected final void recvFromServer(C client) {
-        client.send(processWork(client));
+        Logger.quote("processing Work", this);
+        R response = processWork(client);
+        response.workId = workId;
+        Logger.quote("Finished Work", this);
+        client.send(response);
     }
 
     @Override

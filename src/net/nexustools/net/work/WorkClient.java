@@ -18,6 +18,7 @@ import net.nexustools.io.net.PacketRegistry;
 import net.nexustools.io.net.Server;
 import net.nexustools.io.net.Server.Protocol;
 import net.nexustools.utils.Pair;
+import net.nexustools.utils.log.Logger;
 
 /**
  *
@@ -27,8 +28,17 @@ public class WorkClient<W extends WorkPacket, P extends Packet, S extends WorkSe
 
     private final PropMap<Long, W> sentWork = new PropMap();
     private final AtomicInteger atomicInteger = new AtomicInteger();
-    public WorkClient(String name, Pair<DataInputStream, DataOutputStream> socket, Server server) {
+    public WorkClient(String name, Pair<DataInputStream, DataOutputStream> socket, final WorkServer server) {
         super(name, socket, server);
+        addClientListener(new ClientListener() {
+            @Override
+            public void clientConnected(ClientListener.ClientEvent clientConnectedEvent) {}
+            @Override
+            public void clientDisconnected(ClientListener.ClientEvent clientConnectedEvent) {
+                for(Pair<Long, W> work : sentWork)
+                    server.pushWork(work.v);
+            }
+        });
     }
     public WorkClient(String name, final Pair<DataInputStream,DataOutputStream> socket, PacketRegistry packetRegistry) {
         super(name, socket, packetRegistry);
@@ -40,9 +50,8 @@ public class WorkClient<W extends WorkPacket, P extends Packet, S extends WorkSe
     }
     
     private void init() {
-        int count = runQueue.countThreads();
-        while(count-- > 0)
-            send((P)new RequestWorkPacket());
+        Logger.quote("Requesting Work", this);
+        send((P)new RequestWorkPacket());
     }
     
     public void send(W work) {
@@ -51,7 +60,7 @@ public class WorkClient<W extends WorkPacket, P extends Packet, S extends WorkSe
         super.send((P)work); // incase W and P overlap
     }
     
-    public W takeByID(long workID) { 
+    W takeByID(long workID) { 
         return sentWork.take(workID);
     }
     

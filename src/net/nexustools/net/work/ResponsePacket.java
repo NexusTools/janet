@@ -6,13 +6,24 @@
 
 package net.nexustools.net.work;
 
+import java.io.IOException;
+import net.nexustools.data.AdaptorException;
+import net.nexustools.io.DataInputStream;
+
 /**
  *
  * @author kate
  */
 public abstract class ResponsePacket<W extends WorkPacket, C extends WorkClient<W, ?, ?>, S extends WorkServer<W, ?, ?>> extends BaseWorkPacket<C, S> {
 
+    protected W workRequest;
     protected abstract void handleResponse(C client, S server, W work);
+
+    @Override
+    public void read(DataInputStream dataInput, C client) throws UnsupportedOperationException, IOException, AdaptorException {
+        super.read(dataInput, client);
+        workRequest = client.takeByID(workId);
+    }
     
     @Override
     protected final void recvFromServer(C client) {
@@ -21,7 +32,7 @@ public abstract class ResponsePacket<W extends WorkPacket, C extends WorkClient<
 
     @Override
     protected final void recvFromClient(C client, S server) {
-        handleResponse(client, server, client.takeByID(workId));
+        handleResponse(client, server, workRequest);
     }
     
 }
