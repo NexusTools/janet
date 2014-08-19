@@ -13,6 +13,7 @@ import net.nexustools.io.net.Client;
 import net.nexustools.io.net.Packet;
 import net.nexustools.io.net.PacketRegistry;
 import net.nexustools.io.net.Server;
+import net.nexustools.runtime.RunQueue;
 import net.nexustools.utils.Pair;
 
 /**
@@ -25,6 +26,9 @@ public abstract class WorkServer<W extends WorkPacket, P extends Packet, C exten
     private final PropMap<Client, W> workMap = new PropMap();
     public WorkServer(int port, Protocol protocol, PacketRegistry packetRegistry) throws IOException {
         super(port, protocol, packetRegistry);
+    }
+    public WorkServer(int port, Protocol protocol, PacketRegistry packetRegistry, RunQueue runQueue) throws IOException {
+        super(port, protocol, packetRegistry, runQueue);
     }
 
     @Override

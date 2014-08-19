@@ -7,8 +7,6 @@
 package net.nexustools.net.work;
 
 import java.io.IOException;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import net.nexustools.io.DataInputStream;
 import net.nexustools.io.DataOutputStream;
 import net.nexustools.io.net.PacketRegistry;
@@ -22,8 +20,14 @@ import net.nexustools.utils.Pair;
  */
 public abstract class WorkAppDelegate<C extends WorkClient, S extends WorkServer> extends ServerAppDelegate<C, S> {
 
+    public WorkAppDelegate(String[] args, String name, String organization, PacketRegistry packetRegistry, float multiplier) {
+        super(args, name, organization, packetRegistry, multiplier);
+    }
+    public WorkAppDelegate(String[] args, String name, String organization, float multiplier) {
+        this(args, name, organization, new PacketRegistry(), multiplier);
+    }
     public WorkAppDelegate(String[] args, String name, String organization) {
-        super(args, name, organization);
+        this(args, name, organization, 2.0f);
     }
     
     public abstract WorkPacket nextWork(C client);
@@ -35,17 +39,17 @@ public abstract class WorkAppDelegate<C extends WorkClient, S extends WorkServer
     
     @Override
     protected C createClient(String host, int port) throws IOException {
-        return (C)new WorkClient(name + "-WorkClient", host, port, Protocol.TCP, packetRegistry);
+        return (C)new WorkClient(name + "-WorkClient", host, port, Protocol.TCP, runQueue, packetRegistry);
     }
     
     @Override
     protected C createClient(Pair<DataInputStream,DataOutputStream> socket, S server) throws IOException {
-        return (C)new WorkClient(name + "-WorkClient", socket, packetRegistry);
+        return (C)new WorkClient(name + "-WorkClient", socket, server);
     }
 
     @Override
     protected S createServer(int port) throws IOException {
-        return (S)new WorkServer(port, Protocol.TCP, packetRegistry) {
+        return (S)new WorkServer(port, Protocol.TCP, packetRegistry, runQueue) {
             @Override
             public WorkPacket nextWork(WorkClient client) {
                 WorkPacket work = super.nextWork(client);

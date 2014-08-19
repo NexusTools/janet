@@ -17,6 +17,7 @@ import net.nexustools.io.net.ClientListener;
 import net.nexustools.io.net.Packet;
 import net.nexustools.io.net.PacketRegistry;
 import net.nexustools.io.net.Server.Protocol;
+import net.nexustools.runtime.RunQueue;
 import net.nexustools.utils.Pair;
 import net.nexustools.utils.log.Logger;
 
@@ -45,12 +46,8 @@ public class WorkClient<W extends WorkPacket, P extends Packet, S extends WorkSe
             }
         });
     }
-    public WorkClient(String name, final Pair<DataInputStream,DataOutputStream> socket, PacketRegistry packetRegistry) {
-        super(name, socket, packetRegistry);
-        init();
-    }
-    public WorkClient(String name, String host, int port, Protocol protocol, PacketRegistry packetRegistry) throws IOException {
-        super(name, host, port, protocol, packetRegistry);
+    public WorkClient(String name, String host, int port, Protocol protocol, RunQueue runQueue, PacketRegistry packetRegistry) throws IOException {
+        super(name, host, port, protocol, runQueue, packetRegistry);
         init();
     }
     
