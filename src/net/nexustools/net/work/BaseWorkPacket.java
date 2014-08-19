@@ -11,7 +11,6 @@ import net.nexustools.data.AdaptorException;
 import net.nexustools.data.annote.FieldStream;
 import net.nexustools.io.DataInputStream;
 import net.nexustools.io.DataOutputStream;
-import net.nexustools.io.net.Client;
 import net.nexustools.io.net.Packet;
 
 /**
