@@ -7,6 +7,7 @@
 package net.nexustools.net.work;
 
 import java.io.IOException;
+import java.net.Socket;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 import net.nexustools.concurrent.PropMap;
@@ -29,7 +30,7 @@ public class WorkClient<W extends WorkPacket, P extends Packet, S extends WorkSe
 
     private final PropMap<Long, W> sentWork = new PropMap();
     private final AtomicInteger atomicInteger = new AtomicInteger();
-    public WorkClient(String name, Pair<DataInputStream, DataOutputStream> socket, final WorkServer server) {
+    public WorkClient(String name, Socket socket, final WorkServer server) throws IOException {
         super(name, socket, server);
         addClientListener(new ClientListener() {
             @Override

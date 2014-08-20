@@ -7,6 +7,7 @@
 package net.nexustools.net.work;
 
 import net.nexustools.io.net.SimplePacket;
+import net.nexustools.utils.log.Logger;
 
 /**
  *
@@ -23,6 +24,7 @@ public final class RequestWorkPacket<C extends WorkClient, S extends WorkServer>
     protected void recvFromClient(C client, S server) {
         WorkPacket workPacket = server.nextWork(client);
         if(workPacket == null) {
+            Logger.info("No more new work, will send more when available.");
             // TODO: Queue client for future work
             return;
         }

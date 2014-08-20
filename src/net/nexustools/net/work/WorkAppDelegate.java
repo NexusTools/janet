@@ -7,6 +7,7 @@
 package net.nexustools.net.work;
 
 import java.io.IOException;
+import java.net.Socket;
 import net.nexustools.io.DataInputStream;
 import net.nexustools.io.DataOutputStream;
 import net.nexustools.io.net.PacketRegistry;
@@ -43,7 +44,7 @@ public abstract class WorkAppDelegate<C extends WorkClient, S extends WorkServer
     }
     
     @Override
-    protected C createClient(Pair<DataInputStream,DataOutputStream> socket, S server) throws IOException {
+    protected C createClient(Socket socket, S server) throws IOException {
         return (C)new WorkClient(name + "Client", socket, server);
     }
 
@@ -58,7 +59,7 @@ public abstract class WorkAppDelegate<C extends WorkClient, S extends WorkServer
                 return work;
             }
             @Override
-            public WorkClient createClient(Pair socket) {
+            public WorkClient createClient(Socket socket) {
                 try {
                     return WorkAppDelegate.this.createClient(socket, (S)this); //To change body of generated methods, choose Tools | Templates.
                 } catch (IOException ex) {

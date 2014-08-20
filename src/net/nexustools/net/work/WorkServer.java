@@ -7,9 +7,8 @@
 package net.nexustools.net.work;
 
 import java.io.IOException;
+import java.net.Socket;
 import net.nexustools.concurrent.PropList;
-import net.nexustools.concurrent.PropMap;
-import net.nexustools.io.net.Client;
 import net.nexustools.io.net.Packet;
 import net.nexustools.io.net.PacketRegistry;
 import net.nexustools.io.net.Server;
@@ -31,7 +30,7 @@ public abstract class WorkServer<W extends WorkPacket, P extends Packet, C exten
     }
 
     @Override
-    public C createClient(Pair socket) {
+    public C createClient(Socket socket) throws IOException {
         return (C) new WorkClient("WorkClient", socket, this);
     }
     
