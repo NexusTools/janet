@@ -21,7 +21,13 @@ public final class RequestWorkPacket<C extends WorkClient, S extends WorkServer>
 
     @Override
     protected void recvFromClient(C client, S server) {
-        client.send(server.nextWork(client));
+        WorkPacket workPacket = server.nextWork(client);
+        if(workPacket == null) {
+            // TODO: Queue client for future work
+            return;
+        }
+        
+        client.send(workPacket);
     }
     
 }

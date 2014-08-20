@@ -39,12 +39,12 @@ public abstract class WorkAppDelegate<C extends WorkClient, S extends WorkServer
     
     @Override
     protected C createClient(String host, int port) throws IOException {
-        return (C)new WorkClient(name + "-WorkClient", host, port, Protocol.TCP, runQueue, packetRegistry);
+        return (C)new WorkClient(name + "Client", host, port, Protocol.TCP, runQueue, packetRegistry);
     }
     
     @Override
     protected C createClient(Pair<DataInputStream,DataOutputStream> socket, S server) throws IOException {
-        return (C)new WorkClient(name + "-WorkClient", socket, server);
+        return (C)new WorkClient(name + "Client", socket, server);
     }
 
     @Override

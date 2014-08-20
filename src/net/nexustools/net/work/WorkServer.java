@@ -23,7 +23,6 @@ import net.nexustools.utils.Pair;
 public abstract class WorkServer<W extends WorkPacket, P extends Packet, C extends WorkClient<W, P, ? extends WorkServer>> extends Server<P, C> {
 
     private final PropList<W> workQueue = new PropList();
-    private final PropMap<Client, W> workMap = new PropMap();
     public WorkServer(int port, Protocol protocol, PacketRegistry packetRegistry) throws IOException {
         super(port, protocol, packetRegistry);
     }
