@@ -23,6 +23,8 @@ public abstract class ResponsePacket<W extends WorkPacket, C extends WorkClient<
     public void read(DataInputStream dataInput, C client) throws UnsupportedOperationException, IOException {
         super.read(dataInput, client);
         workRequest = client.takeByID(workId);
+        if(workRequest == null)
+            throw new UnsupportedOperationException("Client requested with data for work that wasn't sent.");
     }
     
     @Override
