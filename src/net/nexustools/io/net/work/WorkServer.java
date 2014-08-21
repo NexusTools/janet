@@ -4,7 +4,7 @@
  * and open the template in the editor.
  */
 
-package net.nexustools.net.work;
+package net.nexustools.io.net.work;
 
 import java.io.IOException;
 import java.net.Socket;
@@ -13,7 +13,6 @@ import net.nexustools.io.net.Packet;
 import net.nexustools.io.net.PacketRegistry;
 import net.nexustools.io.net.Server;
 import net.nexustools.runtime.RunQueue;
-import net.nexustools.utils.Pair;
 
 /**
  *
@@ -21,6 +20,7 @@ import net.nexustools.utils.Pair;
  */
 public abstract class WorkServer<W extends WorkPacket, P extends Packet, C extends WorkClient<W, P, ? extends WorkServer>> extends Server<P, C> {
 
+	final PropList<C> clientQueue = new PropList();
     private final PropList<W> workQueue = new PropList();
     public WorkServer(int port, Protocol protocol, PacketRegistry packetRegistry) throws IOException {
         super(port, protocol, packetRegistry);
@@ -39,8 +39,11 @@ public abstract class WorkServer<W extends WorkPacket, P extends Packet, C exten
     }
     
     public void pushWork(W work) {
-        workQueue.push(work);
-        // TODO: Notify waiting clients
+		C nextClient = clientQueue.shift();
+		if(nextClient == null)
+			workQueue.push(work);
+		else
+			nextClient.send((P)work);
     }
     
 }

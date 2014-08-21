@@ -4,7 +4,7 @@
  * and open the template in the editor.
  */
 
-package net.nexustools.net.work;
+package net.nexustools.io.net.work;
 
 import net.nexustools.io.net.SimplePacket;
 import net.nexustools.utils.log.Logger;

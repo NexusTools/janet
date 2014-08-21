@@ -4,16 +4,13 @@
  * and open the template in the editor.
  */
 
-package net.nexustools.net.work;
+package net.nexustools.io.net.work;
 
 import java.io.IOException;
 import java.net.Socket;
-import net.nexustools.io.DataInputStream;
-import net.nexustools.io.DataOutputStream;
 import net.nexustools.io.net.PacketRegistry;
 import net.nexustools.io.net.Server.Protocol;
 import net.nexustools.io.net.ServerAppDelegate;
-import net.nexustools.utils.Pair;
 
 /**
  *
