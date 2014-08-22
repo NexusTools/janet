@@ -31,7 +31,7 @@ public abstract class WorkServer<W extends WorkPacket, P extends Packet, C exten
 
     @Override
     public C createClient(Socket socket) throws IOException {
-        return (C) new WorkClient("WorkClient", socket, this);
+        return (C) new WorkClient(socket, this);
     }
     
     public W nextWork(C client) {

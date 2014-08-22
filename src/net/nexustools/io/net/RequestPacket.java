@@ -74,7 +74,6 @@ public abstract class RequestPacket<R extends ResponsePacket, C extends Client, 
     }
 
     public static interface Processor {
-
         public void process(RequestPacket request, Client client, int id);
     }
 

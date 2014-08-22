@@ -21,11 +21,11 @@ import net.nexustools.utils.log.Logger;
  */
 public class WorkClient<W extends WorkPacket, P extends Packet, S extends WorkServer<W, P, ? extends WorkClient>> extends Client<P, S> {
 
-    public WorkClient(String name, Socket socket, final WorkServer server) throws IOException {
-        super(name, socket, server);
+    public WorkClient(Socket socket, final WorkServer server) throws IOException {
+        super(socket, server);
     }
-    public WorkClient(String name, String host, int port, Protocol protocol, RunQueue runQueue, PacketRegistry packetRegistry) throws IOException {
-        super(name, host, port, protocol, runQueue, packetRegistry);
+    public WorkClient(String host, int port, Protocol protocol, RunQueue runQueue, PacketRegistry packetRegistry) throws IOException {
+        super(host, port, protocol, runQueue, packetRegistry);
         requestWork();
     }
     

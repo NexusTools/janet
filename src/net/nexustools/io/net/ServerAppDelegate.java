@@ -51,7 +51,7 @@ public abstract class ServerAppDelegate<C extends Client, S extends Server> exte
     }
 
     protected C createClient(Socket socket, S server) throws IOException {
-        return (C) new Client(name + "Client", socket, server);
+        return (C) new Client(socket, server);
     }
 
     protected S createServer(int port) throws IOException {

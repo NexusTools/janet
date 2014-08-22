@@ -61,10 +61,10 @@ public class Server<P extends Packet, C extends Client<P, ? extends Server>> ext
 		this(spawn(port, protocol), packetRegistry, runQueue);
 	}
 	public Server(ServerSocket streamServer, PacketRegistry packetRegistry) {
-		this(streamServer, packetRegistry, new ThreadedRunQueue(streamServer.toString()));
+		this(streamServer, packetRegistry, new ThreadedRunQueue("TCP" + streamServer.getLocalPort(), 1.5f));
 	}
 	protected Server(ServerSocket streamServer, PacketRegistry packetRegistry, RunQueue runQueue) {
-		super("TCP" + streamServer.getLocalPort() + "-Accept");
+		super("TCP" + streamServer.getLocalPort() + "Accept");
 		this.packetRegistry = packetRegistry;
 		this.streamServer = streamServer;
 		this.runQueue = runQueue;
@@ -72,7 +72,7 @@ public class Server<P extends Packet, C extends Client<P, ? extends Server>> ext
 	}
 	
 	public C createClient(Socket socket) throws IOException {
-		return (C) new Client("Client", socket, this);
+		return (C) new Client(socket, this);
 	}
 	
 	public void send(final P packet, final Testable<C> shouldSend) {
@@ -101,6 +101,11 @@ public class Server<P extends Packet, C extends Client<P, ? extends Server>> ext
 		} catch(IOException ex) {
 			ex.printStackTrace();
 		}
+	}
+
+	@Override
+	public String toString() {
+		return getName();
 	}
 	
 }

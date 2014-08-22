@@ -83,7 +83,7 @@ public class Client<P extends Packet, S extends Server<P, ?>> {
 								listener.clientDisconnected(event);
 							}
 						});
-						writeOut(); // Dump remaining packets
+						writeQueue(); // Dump remaining packets
 					}
 				});
 			}
@@ -112,9 +112,9 @@ public class Client<P extends Packet, S extends Server<P, ?>> {
 	final ReceiveThread receiveThread;
 	final Runnable processSendQueue;
 	final Server server;
-	public Client(String name, final Socket socket, final Server server) throws IOException {
+	public Client(final Socket socket, final Server server) throws IOException {
 		final int clientHash = socket.getInetAddress().toString().hashCode();
-		receiveThread = new ReceiveThread(name) {
+		receiveThread = new ReceiveThread(getClass().getSimpleName()) {
 			@Override
 			public Runnable packetProcessor(final P packet) {
 				return new FairRunnable() {
@@ -134,7 +134,7 @@ public class Client<P extends Packet, S extends Server<P, ?>> {
 		Logger.debug(socket.getInetAddress().toString());
 		processSendQueue = new FairRunnable() {
 			public void run() {
-				writeOut();
+				writeQueue();
 			}
 			public int fairHashCode() {
 				return clientHash;
@@ -150,9 +150,9 @@ public class Client<P extends Packet, S extends Server<P, ?>> {
 		
 		receiveThread.start();
 	}
-	public Client(String name, final Socket socket, RunQueue runQueue, PacketRegistry packetRegistry) throws IOException {
+	public Client(final Socket socket, RunQueue runQueue, PacketRegistry packetRegistry) throws IOException {
 		final int clientHash = socket.getInetAddress().toString().hashCode();
-		receiveThread = new ReceiveThread(name) {
+		receiveThread = new ReceiveThread(getClass().getSimpleName()) {
 			@Override
 			public Runnable packetProcessor(final P packet) {
 				return new FairRunnable() {
@@ -171,7 +171,7 @@ public class Client<P extends Packet, S extends Server<P, ?>> {
 		};
 		processSendQueue = new FairRunnable() {
 			public void run() {
-				writeOut();
+				writeQueue();
 			}
 			public int fairHashCode() {
 				return clientHash;
@@ -187,18 +187,18 @@ public class Client<P extends Packet, S extends Server<P, ?>> {
 		
 		receiveThread.start();
 	}
-	public Client(String name, String host, int port, Protocol protocol, RunQueue runQueue, PacketRegistry packetRegistry) throws IOException {
-		this(name, open(host, port, protocol), runQueue, packetRegistry);
+	public Client(String host, int port, Protocol protocol, RunQueue runQueue, PacketRegistry packetRegistry) throws IOException {
+		this(open(host, port, protocol), runQueue, packetRegistry);
 	}
 	public Client(String name, String host, int port, Protocol protocol, PacketRegistry packetRegistry) throws IOException {
-		this(name, host, port, protocol, new ThreadedRunQueue(name), packetRegistry);
+		this(host, port, protocol, new ThreadedRunQueue(name), packetRegistry);
 	}
 	
 	public Server server() {
 		return server;
 	}
 	
-	protected void writeOut() {
+	protected void writeQueue() {
 		List<P> packets = packetQueue.take();
 		Logger.gears("Writing", packets.size(), "packets", this);
 		for(final P packet : packets)
@@ -210,7 +210,7 @@ public class Client<P extends Packet, S extends Server<P, ?>> {
 				public void run() {
 					try {
 						packet.aboutToSend(Client.this);
-						packetRegistry.write(socket.v, Client.this, packet);
+						writePacket(packet);
 						packet.sendComplete(Client.this);
 					} catch (Throwable t) {
 						packet.failedToSend(Client.this, t);
@@ -218,6 +218,10 @@ public class Client<P extends Packet, S extends Server<P, ?>> {
 					}
 				}
 			});
+	}
+	
+	protected void writePacket(P packet) throws IOException, NoSuchMethodException {
+		packetRegistry.write(socket.v, Client.this, packet);
 	}
 	
 	public final void addClientListener(final ClientListener listener) {

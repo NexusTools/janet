@@ -45,8 +45,8 @@ public abstract class Packet<C extends Client, S extends Server> {
 		try {
 			Adaptor.resolveAndRead(this, dataInput);
 		} catch (AdaptorException ex) {
-			Logger.exception(ex);
-			Logger.warn("Packet may be corrupt, don't call super.read on your packet if you don't intend to use an adaptor");
+			Logger.warn("Don't call super.read on your packet if you don't intend to use an adaptor");
+			throw new IOException(ex);
 		}
 	}
 	public void write(DataOutputStream dataOutput, C client) throws UnsupportedOperationException, IOException {
