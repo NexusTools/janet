@@ -12,7 +12,7 @@ import net.nexustools.io.net.ResponsePacket;
  *
  * @author kate
  */
-public abstract class WorkResponsePacket<W extends WorkPacket, C extends WorkClient<W, ?, ?>, S extends WorkServer<W, ?, ?>> extends ResponsePacket<W, C, S> {
+public abstract class WorkResponsePacket<T, W extends WorkPacket, C extends WorkClient<W, ?, ?>, S extends WorkServer<W, ?, ?>> extends ResponsePacket<T, W, C, S> {
 
     protected abstract void handleResponse(C client, S server, W work);
 

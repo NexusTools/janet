@@ -20,9 +20,12 @@ import java.net.Socket;
 import java.util.List;
 import javax.activation.UnsupportedDataTypeException;
 import net.nexustools.concurrent.Condition;
+import net.nexustools.concurrent.DefaultPropMap;
 import net.nexustools.concurrent.ListAccessor;
 import net.nexustools.concurrent.Prop;
+import net.nexustools.concurrent.PropAccessor;
 import net.nexustools.concurrent.PropList;
+import net.nexustools.concurrent.PropMap;
 import net.nexustools.concurrent.logic.Writer;
 import net.nexustools.event.DefaultEventDispatcher;
 import net.nexustools.event.EventDispatcher;
@@ -33,6 +36,7 @@ import net.nexustools.io.net.Server.Protocol;
 import net.nexustools.runtime.FairTaskDelegator.FairRunnable;
 import net.nexustools.runtime.RunQueue;
 import net.nexustools.runtime.ThreadedRunQueue;
+import net.nexustools.utils.Creator;
 import net.nexustools.utils.Pair;
 import net.nexustools.utils.log.Logger;
 
@@ -43,7 +47,13 @@ import net.nexustools.utils.log.Logger;
 public class Client<P extends Packet, S extends Server<P, ?>> {
 	
 	private static final ThreadedRunQueue sendQueue = new ThreadedRunQueue("ClientOut", ThreadedRunQueue.Delegator.Fair, 2f);
-
+	static final DefaultPropMap<Class<?>, Prop<?>> clientStorage = new DefaultPropMap<Class<?>, Prop<?>>(new Creator<Prop<?>, Class<?>>() {
+		public Prop<?> create(Class<?> using) {
+			return new Prop();
+		}
+	});
+	
+	static final ThreadLocal<Client> currentClient = new ThreadLocal();
 	private abstract class ReceiveThread extends Thread {
 		public ReceiveThread(String name) {
 			super(name + "In");
@@ -54,6 +64,7 @@ public class Client<P extends Packet, S extends Server<P, ?>> {
 		@Override
 		public void run() {
 			try {
+				currentClient.set(Client.this);
 				while(true) {
 					final P packet = nextPacket();
 					if(packet == null)
@@ -119,6 +130,7 @@ public class Client<P extends Packet, S extends Server<P, ?>> {
 			public Runnable packetProcessor(final P packet) {
 				return new FairRunnable() {
 					public void run() {
+						currentClient.set(Client.this);
 						packet.recvFromClient(Client.this, server);
 					}
 					public int fairHashCode() {
@@ -157,6 +169,7 @@ public class Client<P extends Packet, S extends Server<P, ?>> {
 			public Runnable packetProcessor(final P packet) {
 				return new FairRunnable() {
 					public void run() {
+						currentClient.set(Client.this);
 						packet.recvFromServer(Client.this);
 					}
 					public int fairHashCode() {
@@ -199,6 +212,7 @@ public class Client<P extends Packet, S extends Server<P, ?>> {
 	}
 	
 	protected void writeQueue() {
+		currentClient.set(this);
 		List<P> packets = packetQueue.take();
 		Logger.gears("Writing", packets.size(), "packets", this);
 		for(final P packet : packets)

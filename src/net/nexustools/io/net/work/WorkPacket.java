@@ -19,7 +19,7 @@ public abstract class WorkPacket<R extends WorkResponsePacket, C extends WorkCli
 
 	@Override
 	protected void failedToComplete(C client) {
-		Logger.quote("Recovering failed work", this);
+		Logger.gears("Recovering failed work", this);
 		((WorkServer)client.server()).pushWork(this);
 	}
 

@@ -21,6 +21,7 @@ import net.nexustools.concurrent.PropMap;
 import net.nexustools.concurrent.logic.Reader;
 import net.nexustools.concurrent.logic.WriteReader;
 import net.nexustools.concurrent.logic.Writer;
+import net.nexustools.io.net.RequestPacket.ClientRequests;
 import net.nexustools.utils.Creator;
 import net.nexustools.utils.log.Logger;
 
@@ -28,13 +29,13 @@ import net.nexustools.utils.log.Logger;
  *
  * @author kate
  */
-public abstract class RequestPacket<R extends ResponsePacket, C extends Client, S extends Server> extends RefPacket<C, S> {
+public abstract class RequestPacket<R extends ResponsePacket, C extends Client, S extends Server> extends RefPacket<ClientRequests, C, S> {
 
     protected static class ClientRequests {
-        PropMap<Integer, RequestPacket> sent = new PropMap();
+        PropMap<Short, RequestPacket> sent = new PropMap();
 		final ClientListener clientListener;
 		final Client client;
-        int nextID = 0;
+        short nextID = 0;
 		
 		private ClientRequests(final Client client) {
 			clientListener = new ClientListener() {
@@ -43,7 +44,7 @@ public abstract class RequestPacket<R extends ResponsePacket, C extends Client, 
 					client.removeClientListener(clientListener);
 					Collection<RequestPacket> requests = sent.take().values();
 					if(requests.size() > 0) {
-						Logger.gears("Client Imploded", requests.size(), "Requests");
+						Logger.debug("Client Imploded", requests.size(), "Requests");
 						for(RequestPacket packet : requests)
 							packet.failedToComplete(client);
 					}
@@ -53,22 +54,22 @@ public abstract class RequestPacket<R extends ResponsePacket, C extends Client, 
 			this.client = client;
 		}
 		
-		public int push(final RequestPacket request) {
-			return sent.read(new WriteReader<Integer, MapAccessor<Integer, RequestPacket>>() {
+		public short push(final RequestPacket request) {
+			return sent.read(new WriteReader<Short, MapAccessor<Short, RequestPacket>>() {
 				@Override
-				public Integer read(MapAccessor<Integer, RequestPacket> data) {
-					int reqID = nextID++;
+				public Short read(MapAccessor<Short, RequestPacket> data) {
+					short reqID = nextID++;
 
 					while (data.has(reqID))
 						reqID = nextID++;
 					data.put(reqID, request);
-					Logger.debug("Sending Request", reqID, request, client);
+					Logger.gears("Sending Request", refStr(reqID), request, client);
 					return reqID;
 				}
 			});
 		}
 		
-		public RequestPacket take(int id) {
+		public RequestPacket take(short id) {
 			return sent.take(id);
 		}
     }
@@ -79,25 +80,37 @@ public abstract class RequestPacket<R extends ResponsePacket, C extends Client, 
 
     protected static final DefaultPropMap<Client, ClientRequests> sendRequests = new DefaultPropMap(new Creator<ClientRequests, Client>() {
         public ClientRequests create(Client client) {
+			Logger.debug("Creating Cache for", client);
             return new ClientRequests(client);
         }
     }, PropMap.Type.WeakHashMap);
+	
+    static void checkResponse(final Client client, final short id) {
+		if(!sendRequests.read(new Reader<Boolean, MapAccessor<Client, ClientRequests>>() {
+					@Override
+					public Boolean read(MapAccessor<Client, ClientRequests> data) {
+						if(!data.get(client).sent.has(id))
+							return false;
+						return true;
+					}
+				}))
+            throw new RuntimeException("No such request was made: " + refStr(id));
+	}
 
-    static void processResponse(Processor processor, final Client client, final int id) {
+    static void processResponse(Processor processor, final Client client, final short id) {
         RequestPacket request = sendRequests.read(new Reader<RequestPacket, MapAccessor<Client, ClientRequests>>() {
             @Override
             public RequestPacket read(MapAccessor<Client, ClientRequests> data) {
-                return data.get(client).take(id);
+                RequestPacket packet = data.get(client).take(id);
+				if(packet == null)
+					Logger.debug(data.get(client).sent.copy());
+				return packet;
             }
         });
         if (request == null)
-            throw new RuntimeException("No such request was made");
+            throw new RuntimeException("No such request was made: " + refStr(id));
 
-        try {
-            processor.process(request, client, id);
-        } catch (Throwable t) {
-            // TODO: Add aborted work handler
-        }
+        processor.process(request, client, id);
     }
 
     protected abstract R handleServerRequest(C client);
@@ -105,9 +118,9 @@ public abstract class RequestPacket<R extends ResponsePacket, C extends Client, 
 
 	@Override
 	protected void aboutToSend(final C client) {
-		refID = sendRequests.read(new WriteReader<Integer, MapAccessor<Client, ClientRequests>>() {
+		refID = sendRequests.read(new WriteReader<Short, MapAccessor<Client, ClientRequests>>() {
             @Override
-            public Integer read(MapAccessor<Client, ClientRequests> data) {
+            public Short read(MapAccessor<Client, ClientRequests> data) {
 				return data.get(client).push(RequestPacket.this);
             }
         });
@@ -122,7 +135,7 @@ public abstract class RequestPacket<R extends ResponsePacket, C extends Client, 
 			@Override
 			public void write(MapAccessor<Client, ClientRequests> data) {
 				if(data.has(client)) {
-					Logger.debug("Request Failed to Send", refID, RequestPacket.this, client);
+					Logger.debug("Request Failed to Send", refStr(refID), RequestPacket.this, client);
 					ClientRequests requests = data.get(client);
 					requests.sent.remove(refID);
 				}
@@ -134,7 +147,7 @@ public abstract class RequestPacket<R extends ResponsePacket, C extends Client, 
 
     @Override
     protected final void recvFromServer(C client) {
-        Logger.debug("Handling Request from Server", this, client);
+        Logger.debug("Handling Request from Server", refStr(refID), this, client);
         R response = handleServerRequest(client);
         if (response == null) {
             Logger.gears("No immediate response for request", this, client);
@@ -147,7 +160,7 @@ public abstract class RequestPacket<R extends ResponsePacket, C extends Client, 
 
     @Override
     protected final void recvFromClient(C client, S server) {
-        Logger.debug("Handling Request from Client", this, client);
+        Logger.debug("Handling Request from Client", refStr(refID), this, client);
         R response = handleClientRequest(client, server);
         if (response == null) {
             Logger.gears("No immediate response for request", this, client);

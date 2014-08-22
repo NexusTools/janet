@@ -23,7 +23,7 @@ import net.nexustools.io.DataOutputStream;
  *
  * @author kate
  */
-public abstract class SimplePacket<C extends Client, S extends Server> extends Packet<C, S> {
+public abstract class SimplePacket<T, C extends Client, S extends Server> extends Packet<T, C, S> {
 	
     @Override
     public final void read(DataInputStream dataInput, C client) throws UnsupportedOperationException, IOException {}

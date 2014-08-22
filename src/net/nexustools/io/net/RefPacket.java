@@ -21,14 +21,21 @@ import net.nexustools.data.annote.FieldStream;
  *
  * @author kate
  */
-public abstract class RefPacket<C extends Client, S extends Server> extends Packet<C, S> {
+public abstract class RefPacket<T, C extends Client, S extends Server> extends Packet<T, C, S> {
 	
 	@FieldStream(staticField = true)
-	protected int refID;
+	protected short refID;
 	
-	public RefPacket(int id) {
+	public RefPacket(short id) {
 		refID = id;
 	}
 	public RefPacket() {}
+	
+	public static String refStr(short id) {
+		String str = Integer.toHexString(id).toUpperCase();
+		while(str.length() < 4)
+			str = "0" + str;
+		return "0x" + str;
+	}
 	
 }

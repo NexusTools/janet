@@ -13,7 +13,7 @@ import net.nexustools.utils.log.Logger;
  *
  * @author kate
  */
-public final class RequestWorkPacket<C extends WorkClient, S extends WorkServer> extends SimplePacket<C, S> {
+public final class RequestWorkPacket<T, C extends WorkClient, S extends WorkServer> extends SimplePacket<T, C, S> {
 
     @Override
     protected void recvFromServer(C client) {

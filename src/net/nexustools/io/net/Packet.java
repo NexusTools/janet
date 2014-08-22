@@ -30,7 +30,7 @@ import net.nexustools.utils.log.Logger;
  *
  * @author kate
  */
-public abstract class Packet<C extends Client, S extends Server> {
+public abstract class Packet<T, C extends Client, S extends Server> {
 	
 	private final Prop<byte[]> cache = new Prop();
 	
@@ -77,6 +77,13 @@ public abstract class Packet<C extends Client, S extends Server> {
 				}
 			}
 		});
+	}
+	
+	private ClientStorage<T> storage;
+	public ClientStorage<T> storage() {
+		if(storage == null)
+			storage = new ClientStorage<T>(getClass());
+		return storage;
 	}
 	
 }

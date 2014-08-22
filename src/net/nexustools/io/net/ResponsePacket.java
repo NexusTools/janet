@@ -23,7 +23,7 @@ import net.nexustools.utils.log.Logger;
  *
  * @author kate
  */
-public abstract class ResponsePacket<R extends RequestPacket, C extends Client, S extends Server> extends RefPacket<C, S> {
+public abstract class ResponsePacket<T, R extends RequestPacket, C extends Client, S extends Server> extends RefPacket<T, C, S> {
 	
     protected abstract void handleServerResponse(C client, R request);
     protected abstract void handleClientResponse(C client, S server, R request);
@@ -31,6 +31,7 @@ public abstract class ResponsePacket<R extends RequestPacket, C extends Client, 
 	@Override
 	public void read(DataInputStream dataInput, C client) throws UnsupportedOperationException, IOException {
 		super.read(dataInput, client);
+		RequestPacket.checkResponse(client, refID);
 	}
 
 	@Override
