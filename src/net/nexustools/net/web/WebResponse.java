@@ -19,4 +19,8 @@ public abstract class WebResponse<T, C extends Client, S extends WebServer> exte
 		throw new UnsupportedOperationException("Not supported yet.");
 	}
 	
+	public abstract int status();
+	public abstract String statusMessage();
+	public abstract WebHeaders headers();
+	
 }

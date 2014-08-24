@@ -14,7 +14,9 @@
  */
 package net.nexustools.net;
 
+import java.lang.reflect.InvocationTargetException;
 import java.util.Collection;
+import java.util.logging.Level;
 import net.nexustools.concurrent.DefaultPropMap;
 import net.nexustools.data.accessor.MapAccessor;
 import net.nexustools.concurrent.PropMap;
@@ -23,6 +25,7 @@ import net.nexustools.concurrent.logic.WriteReader;
 import net.nexustools.concurrent.logic.Writer;
 import net.nexustools.net.RequestPacket.ClientRequests;
 import net.nexustools.utils.Creator;
+import net.nexustools.utils.NXUtils;
 import net.nexustools.utils.log.Logger;
 
 /**
@@ -55,18 +58,22 @@ public abstract class RequestPacket<R extends ResponsePacket, C extends Client, 
 		}
 		
 		public short push(final RequestPacket request) {
-			return sent.read(new WriteReader<Short, MapAccessor<Short, RequestPacket>>() {
-				@Override
-				public Short read(MapAccessor<Short, RequestPacket> data) {
-					short reqID = nextID++;
-
-					while (data.has(reqID))
-						reqID = nextID++;
-					data.put(reqID, request);
-					Logger.gears("Sending Request", refStr(reqID), request, client);
-					return reqID;
-				}
-			});
+			try {
+				return sent.read(new WriteReader<Short, MapAccessor<Short, RequestPacket>>() {
+					@Override
+					public Short read(MapAccessor<Short, RequestPacket> data) {
+						short reqID = nextID++;
+						
+						while (data.has(reqID))
+							reqID = nextID++;
+						data.put(reqID, request);
+						Logger.gears("Sending Request", refStr(reqID), request, client);
+						return reqID;
+					}
+				});
+			} catch (InvocationTargetException ex) {
+				throw NXUtils.unwrapRuntime(ex);
+			}
 		}
 		
 		public RequestPacket take(short id) {
@@ -86,27 +93,36 @@ public abstract class RequestPacket<R extends ResponsePacket, C extends Client, 
     }, PropMap.Type.WeakHashMap);
 	
     static void checkResponse(final Client client, final short id) {
-		if(!sendRequests.read(new Reader<Boolean, MapAccessor<Client, ClientRequests>>() {
-					@Override
-					public Boolean read(MapAccessor<Client, ClientRequests> data) {
-						if(!data.get(client).sent.has(id))
-							return false;
-						return true;
-					}
-				}))
-            throw new RuntimeException("No such request was made: " + refStr(id));
+		try {
+			if(!sendRequests.read(new Reader<Boolean, MapAccessor<Client, ClientRequests>>() {
+				@Override
+				public Boolean read(MapAccessor<Client, ClientRequests> data) {
+					if(!data.get(client).sent.has(id))
+						return false;
+					return true;
+				}
+			}))
+				throw new RuntimeException("No such request was made: " + refStr(id));
+		} catch (InvocationTargetException ex) {
+			throw NXUtils.unwrapRuntime(ex);
+		}
 	}
 
     static void processResponse(Processor processor, final Client client, final short id) {
-        RequestPacket request = sendRequests.read(new Reader<RequestPacket, MapAccessor<Client, ClientRequests>>() {
-            @Override
-            public RequestPacket read(MapAccessor<Client, ClientRequests> data) {
-                RequestPacket packet = data.get(client).take(id);
-				if(packet == null)
-					Logger.debug(data.get(client).sent.copy());
-				return packet;
-            }
-        });
+        RequestPacket request;
+		try {
+			request = sendRequests.read(new Reader<RequestPacket, MapAccessor<Client, ClientRequests>>() {
+				@Override
+				public RequestPacket read(MapAccessor<Client, ClientRequests> data) {
+					RequestPacket packet = data.get(client).take(id);
+					if(packet == null)
+						Logger.debug(data.get(client).sent.copy());
+					return packet;
+				}
+			});
+		} catch (InvocationTargetException ex) {
+			throw NXUtils.unwrapRuntime(ex);
+		}
         if (request == null)
             throw new RuntimeException("No such request was made: " + refStr(id));
 
@@ -118,12 +134,16 @@ public abstract class RequestPacket<R extends ResponsePacket, C extends Client, 
 
 	@Override
 	protected void aboutToSend(final C client) {
-		refID = sendRequests.read(new WriteReader<Short, MapAccessor<Client, ClientRequests>>() {
-            @Override
-            public Short read(MapAccessor<Client, ClientRequests> data) {
-				return data.get(client).push(RequestPacket.this);
-            }
-        });
+		try {
+			refID = sendRequests.read(new WriteReader<Short, MapAccessor<Client, ClientRequests>>() {
+				@Override
+				public Short read(MapAccessor<Client, ClientRequests> data) {
+					return data.get(client).push(RequestPacket.this);
+				}
+			});
+		} catch (InvocationTargetException ex) {
+			throw NXUtils.unwrapRuntime(ex);
+		}
 		super.aboutToSend(client);
 	}
 	
@@ -131,16 +151,20 @@ public abstract class RequestPacket<R extends ResponsePacket, C extends Client, 
 
 	@Override
 	protected void failedToSend(final C client, Throwable reason) {
-		sendRequests.write(new Writer<MapAccessor<Client, ClientRequests>>() {
-			@Override
-			public void write(MapAccessor<Client, ClientRequests> data) {
-				if(data.has(client)) {
-					Logger.debug("Request Failed to Send", refStr(refID), RequestPacket.this, client);
-					ClientRequests requests = data.get(client);
-					requests.sent.remove(refID);
+		try {
+			sendRequests.write(new Writer<MapAccessor<Client, ClientRequests>>() {
+				@Override
+				public void write(MapAccessor<Client, ClientRequests> data) {
+					if(data.has(client)) {
+						Logger.debug("Request Failed to Send", refStr(refID), RequestPacket.this, client);
+						ClientRequests requests = data.get(client);
+						requests.sent.remove(refID);
+					}
 				}
-			}
-        });
+			});
+		} catch (InvocationTargetException ex) {
+			throw NXUtils.unwrapRuntime(ex);
+		}
 		failedToComplete(client);
 		super.failedToSend(client, reason);
 	}

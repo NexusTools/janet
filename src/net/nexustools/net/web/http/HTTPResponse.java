@@ -71,5 +71,20 @@ public class HTTPResponse<T, C extends Client, S extends HTTPServer> extends Web
 		} else
 			dataOutput.flush();
     }
+
+	@Override
+	public int status() {
+		return status;
+	}
+
+	@Override
+	public String statusMessage() {
+		return statusString;
+	}
+
+	@Override
+	public WebHeaders headers() {
+		return headers;
+	}
 	
 }

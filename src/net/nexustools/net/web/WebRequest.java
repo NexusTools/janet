@@ -8,8 +8,11 @@ package net.nexustools.net.web;
 
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import net.nexustools.net.Client;
+import net.nexustools.utils.ArgumentMap;
 import net.nexustools.utils.log.Logger;
 
 /**
@@ -28,29 +31,49 @@ public abstract class WebRequest<T, C extends Client, S extends WebServer> exten
 	}
     
     public abstract String method();
+    public abstract String requestURI();
     public abstract String path();
     
 	public abstract WebHeaders headers();
-    public abstract Map<String,String> request(Scope scope);
+    public abstract ArgumentMap arguments(Scope scope);
 	
 	public String requestString(Scope scope) {
-		Map<String,String> map = request(scope);
+		ArgumentMap map = arguments(scope);
 		StringBuilder builder = new StringBuilder();
 		
 		boolean addAnd = false;
-		for(Map.Entry<String, String> entry : map.entrySet()) {
-			if(addAnd)
-				builder.append('&');
-			else
-				addAnd = true;
+		for(Map.Entry<String, ArrayList<String>> entry : map.entrySet()) {
 			
-			try {
-				builder.append(URLEncoder.encode(entry.getKey(), "UTF-8"));
-				builder.append('=');
-				builder.append(URLEncoder.encode(entry.getValue(), "UTF-8"));
-			} catch (UnsupportedEncodingException ex) {
-				throw new RuntimeException(ex);
+			List<String> values = entry.getValue();
+			if(values.size() > 0)
+				for(String value : values) {
+					if(addAnd)
+						builder.append('&');
+					else
+						addAnd = true;
+					try {
+						builder.append(URLEncoder.encode(entry.getKey(), "UTF-8"));
+						builder.append('=');
+						builder.append(URLEncoder.encode(value, "UTF-8"));
+					} catch (UnsupportedEncodingException ex) {
+						throw new RuntimeException(ex);
+					}
+				}
+			else {
+				if(addAnd)
+					builder.append('&');
+				else
+					addAnd = true;
+				
+				try {
+					builder.append(URLEncoder.encode(entry.getKey(), "UTF-8"));
+				} catch (UnsupportedEncodingException ex) {
+					throw new RuntimeException(ex);
+				}
 			}
+			
+			
+					
 		}
 		return "";
 	}

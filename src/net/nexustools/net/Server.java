@@ -16,13 +16,16 @@
 package net.nexustools.net;
 
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.logging.Level;
 import net.nexustools.data.accessor.ListAccessor;
 import net.nexustools.concurrent.PropList;
 import net.nexustools.concurrent.logic.VoidReader;
 import net.nexustools.runtime.RunQueue;
 import net.nexustools.runtime.ThreadedRunQueue;
+import net.nexustools.utils.NXUtils;
 import net.nexustools.utils.Testable;
 import net.nexustools.utils.log.Logger;
 
@@ -83,14 +86,18 @@ public class Server<P extends Packet, C extends Client<P, ? extends Server>> ext
 	}
 	
 	public void send(final P packet, final Testable<C> shouldSend) {
-		clients.read(new VoidReader<ListAccessor<C>>() {
-			@Override
-			public void readV(ListAccessor<C> data) {
-				for(C client : data)
-					if(shouldSend.test(client))
-						client.send(packet);
-			}
-		});
+		try {
+			clients.read(new VoidReader<ListAccessor<C>>() {
+				@Override
+				public void readV(ListAccessor<C> data) throws Throwable {
+					for(C client : data)
+						if(shouldSend.test(client))
+							client.send(packet);
+				}
+			});
+		} catch (InvocationTargetException ex) {
+			throw NXUtils.unwrapRuntime(ex);
+		}
 	}
 	public void sendAll(P packet) {
 		send(packet, Testable.TRUE);

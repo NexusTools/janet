@@ -12,8 +12,11 @@ package net.nexustools.net.web.modules;
  */
 public class FileModule extends StreamModule {
 	
+	public FileModule(String path, String authGET) {
+		super("file://" + path, authGET);
+	}
 	public FileModule(String path) {
-		super("file:/" + path);
+		this("file://" + path, null);
 	}
 	
 }

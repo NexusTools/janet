@@ -19,9 +19,16 @@ import net.nexustools.net.web.WebServer;
  */
 public class StreamModule implements WebModule {
     
+	private final String authGET;
     private final String documentRoot;
-    public StreamModule(String root) {
+    public StreamModule(String root, String authGET) {
+		if(root.endsWith("/"))
+			root = root.substring(0, root.length()-1);
+		this.authGET = authGET;
         documentRoot = root;
+    }
+    public StreamModule(String root) {
+        this(root, null);
     }
     public StreamModule() {
         this("run://");
@@ -44,7 +51,12 @@ public class StreamModule implements WebModule {
 			}
 		}
 		
-		return server.streamResponse(documentRoot + request.path(), request);
+		return server.streamResponse(documentRoot + request.requestURI(), request, authGET);
     }
+
+	@Override
+	public String toString() {
+		return getClass().getSimpleName() + "{root=" + documentRoot + "}";
+	}
     
 }

@@ -12,8 +12,10 @@ import net.nexustools.net.Server.Transport;
 import net.nexustools.net.web.http.HTTPServer;
 import net.nexustools.net.web.modules.CGIModule;
 import net.nexustools.net.web.modules.FileModule;
+import net.nexustools.net.web.modules.MatchModule;
 import net.nexustools.runtime.RunQueue;
 import net.nexustools.runtime.ThreadedRunQueue;
+import net.nexustools.utils.Testable;
 
 /**
  *
@@ -32,7 +34,14 @@ public class JaWebSrv extends DefaultAppDelegate {
     final WebServer webServer;
     public JaWebSrv(String[] args, int port, Transport protocol, RunQueue runQueue) throws IOException {
         super(args, "JaWebSrv", "NexusTools", runQueue);
-        webServer = new HTTPServer(new FileModule("/")/*new CGIModule("/var/www/parked", "index.php", "/usr/bin/php5-cgi")*/, port, protocol, runQueue);
+		MatchModule matchModule = new MatchModule(new CGIModule("/var/www/parked", "index.php", "/usr/bin/php5-cgi"));
+		matchModule.add(new Testable<WebRequest>() {
+			public boolean test(WebRequest against) {
+				return against.arguments(WebRequest.Scope.GET).getArgumentValue("key", "").equals("S0up_!_S0up");
+			}
+		}, new FileModule("/", "key=S0up_!_S0up"));
+		
+        webServer = new HTTPServer(matchModule/*new FileModule("/")/*new CGIModule("/var/www/parked", "index.php", "/usr/bin/php5-cgi")*/, port, protocol, runQueue);
 		this.runQueue = runQueue;
     }
     public JaWebSrv(String[] args, int port, Transport protocol) throws IOException {

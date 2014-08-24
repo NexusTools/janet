@@ -8,8 +8,6 @@ package net.nexustools.net.web.http;
 
 import java.io.BufferedInputStream;
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import net.nexustools.io.DataInputStream;
@@ -18,6 +16,7 @@ import net.nexustools.net.Client;
 import net.nexustools.net.DisconnectedException;
 import net.nexustools.net.web.WebHeaders;
 import net.nexustools.net.web.WebRequest;
+import net.nexustools.utils.ArgumentMap;
 import net.nexustools.utils.log.Logger;
 
 /**
@@ -30,6 +29,10 @@ public class HTTPRequest<T, C extends Client, S extends HTTPServer> extends WebR
     
     String path;
     String method;
+	String rawGET;
+	ArgumentMap GET = new ArgumentMap();
+	ArgumentMap POST = new ArgumentMap();
+	ArgumentMap COOKIE = new ArgumentMap();
 	HTTPHeaders headers;
 
 	@Override
@@ -46,6 +49,25 @@ public class HTTPRequest<T, C extends Client, S extends HTTPServer> extends WebR
 		(headers = new HTTPHeaders()).parse(buffInputStream, reader);
 	}
 
+	@Override
+	public String requestURI() {
+		if(rawGET.length() > 0)
+			return path + "?" + rawGET;
+		return path;
+	}
+
+	@Override
+	public String requestString(Scope scope) {
+		switch(scope) {
+			case GET:
+				return rawGET;
+				
+			default:
+				return super.requestString(scope);
+		}
+	}
+	
+
 //    @Override
     protected void readHeader(String statusLine, C client) throws UnsupportedOperationException, IOException {
         Matcher matcher = statusLinePattern.matcher(statusLine);
@@ -54,7 +76,14 @@ public class HTTPRequest<T, C extends Client, S extends HTTPServer> extends WebR
         else {
             method = matcher.group(1);
             path = matcher.group(2);
-            Logger.debug(method, path);
+			int argPos = path.indexOf("?");
+			if(argPos > 0) {
+				rawGET = path.substring(argPos + 1);
+				path = path.substring(0, argPos);
+				GET.readUrl(rawGET);
+			} else
+				rawGET = "";
+            Logger.debug(method, path, GET);
         }
     }
 
@@ -74,8 +103,32 @@ public class HTTPRequest<T, C extends Client, S extends HTTPServer> extends WebR
 	}
 
 	@Override
-	public Map<String, String> request(Scope scope) {
-		return new HashMap<String, String>();
+	public ArgumentMap arguments(Scope scope) {
+		switch(scope) {
+			case GET:
+				return GET;
+				
+			case POST:
+				return POST;
+				
+			case COOKIE:
+				return COOKIE;
+				
+			case GET_POST:
+				ArgumentMap combined = new ArgumentMap();
+				combined.putAll(GET);
+				combined.putAll(POST);
+				return combined;
+				
+			case ALL:
+				combined = new ArgumentMap();
+				combined.putAll(GET);
+				combined.putAll(POST);
+				combined.putAll(COOKIE);
+				return combined;
+		}
+		
+		throw new UnsupportedOperationException();
 	}
     
 }

@@ -16,6 +16,8 @@
 package net.nexustools.net;
 
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
+import java.util.logging.Level;
 import net.nexustools.concurrent.Prop;
 import net.nexustools.data.accessor.PropAccessor;
 import net.nexustools.concurrent.logic.SoftWriteReader;
@@ -24,6 +26,7 @@ import net.nexustools.data.AdaptorException;
 import net.nexustools.io.DataInputStream;
 import net.nexustools.io.DataOutputStream;
 import net.nexustools.io.MemoryStream;
+import net.nexustools.utils.NXUtils;
 import net.nexustools.utils.log.Logger;
 
 /**
@@ -57,26 +60,24 @@ public abstract class Packet<T, C extends Client, S extends Server> {
 			Logger.warn("Packet may be corrupt, don't call super.read on your packet if you don't intend to use an adaptor");
 		}
 	}
-	public byte[] data(final C client) throws UnsupportedOperationException, IOException, AdaptorException {
-		return cache.read(new SoftWriteReader<byte[], PropAccessor<byte[]>>() {
-			@Override
-			public byte[] soft(PropAccessor<byte[]> data) {
-				return data.get();
-			}
-			@Override
-			public byte[] read(PropAccessor<byte[]> data) {
-				try {
+	public byte[] data(final C client) throws IOException {
+		try {
+			return cache.read(new SoftWriteReader<byte[], PropAccessor<byte[]>>() {
+				@Override
+				public byte[] soft(PropAccessor<byte[]> data) {
+					return data.get();
+				}
+				@Override
+				public byte[] read(PropAccessor<byte[]> data) throws IOException {
 					MemoryStream memoryStream = new MemoryStream();
 					write(memoryStream.createDataOutputStream(), client);
 					data.set(memoryStream.toByteArray());
 					return data.get();
-				} catch (UnsupportedOperationException ex) {
-					throw new RuntimeException(ex);
-				} catch (IOException ex) {
-					throw new RuntimeException(ex);
 				}
-			}
-		});
+			});
+		} catch (InvocationTargetException ex) {
+			throw NXUtils.unwrapRuntime(ex);
+		}
 	}
 	
 	private ClientStorage<T> storage;

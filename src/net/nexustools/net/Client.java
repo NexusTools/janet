@@ -16,6 +16,7 @@
 package net.nexustools.net;
 
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
 import java.net.Socket;
 import java.net.SocketException;
 import java.util.List;
@@ -37,6 +38,7 @@ import net.nexustools.runtime.FairTaskDelegator.FairRunnable;
 import net.nexustools.runtime.RunQueue;
 import net.nexustools.runtime.ThreadedRunQueue;
 import net.nexustools.utils.Creator;
+import net.nexustools.utils.NXUtils;
 import net.nexustools.utils.Pair;
 import net.nexustools.utils.log.Logger;
 
@@ -273,13 +275,17 @@ public class Client<P extends Packet, S extends Server<P, ?>> {
 		if(shutdown.isFinished())
 			packet.failedToSend(Client.this, new DisconnectedException());
 		else
-			packetQueue.write(new Writer<ListAccessor<P>>() {
-				@Override
-				public void write(ListAccessor<P> data) {
-					data.push(packet);
-					sendQueue.push(processSendQueue, RunQueue.Placement.ReplaceExisting);
-				}
-			});
+			try {
+				packetQueue.write(new Writer<ListAccessor<P>>() {
+					@Override
+					public void write(ListAccessor<P> data) {
+						data.push(packet);
+						sendQueue.push(processSendQueue, RunQueue.Placement.ReplaceExisting);
+					}
+				});
+			} catch (InvocationTargetException ex) {
+				throw NXUtils.unwrapRuntime(ex);
+			}
 	}
 
 	public boolean isConnected() {

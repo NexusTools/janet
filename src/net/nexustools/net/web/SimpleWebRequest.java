@@ -7,6 +7,7 @@
 package net.nexustools.net.web;
 
 import java.util.Map;
+import net.nexustools.utils.ArgumentMap;
 
 /**
  *
@@ -45,7 +46,12 @@ public class SimpleWebRequest extends WebRequest {
 	}
 
 	@Override
-	public Map request(Scope scope) {
+	public String requestURI() {
+		throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+	}
+
+	@Override
+	public ArgumentMap arguments(Scope scope) {
 		throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
 	}
 	
