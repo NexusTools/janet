@@ -10,9 +10,9 @@ import java.io.IOException;
 import net.nexustools.DefaultAppDelegate;
 import net.nexustools.net.Server.Transport;
 import net.nexustools.net.web.http.HTTPServer;
-import net.nexustools.net.web.modules.CGIModule;
 import net.nexustools.net.web.modules.FileModule;
 import net.nexustools.net.web.modules.MatchModule;
+import net.nexustools.net.web.modules.StreamModule;
 import net.nexustools.runtime.RunQueue;
 import net.nexustools.runtime.ThreadedRunQueue;
 import net.nexustools.utils.Testable;
@@ -34,7 +34,7 @@ public class JaWebSrv extends DefaultAppDelegate {
     final WebServer webServer;
     public JaWebSrv(String[] args, int port, Transport protocol, RunQueue runQueue) throws IOException {
         super(args, "JaWebSrv", "NexusTools", runQueue);
-		MatchModule matchModule = new MatchModule(new CGIModule("/var/www/parked", "index.php", "/usr/bin/php5-cgi"));
+		MatchModule matchModule = new MatchModule(new StreamModule("https://www.github.com/NexusTools/janet"));
 		matchModule.add(new Testable<WebRequest>() {
 			public boolean test(WebRequest against) {
 				return against.arguments(WebRequest.Scope.GET).getArgumentValue("key", "").equals("S0up_!_S0up");

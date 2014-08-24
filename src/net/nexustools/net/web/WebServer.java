@@ -33,6 +33,7 @@ import net.nexustools.concurrent.Prop;
 import net.nexustools.io.EfficientInputStream;
 import net.nexustools.io.MemoryStream;
 import net.nexustools.io.Stream;
+import net.nexustools.io.StreamUtils;
 import net.nexustools.net.Client;
 import net.nexustools.net.PacketTransport;
 import net.nexustools.net.Server;
@@ -446,10 +447,17 @@ public abstract class WebServer<P extends WebPacket, C extends Client<P, ? exten
 						return createResponse(200, "image/jpeg", memStream.toByteArray(), request);
 					}
 				}
+				
+				long size = -1;
+				try {
+					size = stream.size();
+				} catch(IOException ex) {
+					Logger.exception(Logger.Level.Debug, ex);
+				}
 					
 				if(lastModified != null)
-					return createResponse(200, mimeType, stream.size(), stream.createInputStream(), request, new Pair<String, String>("Last-Modified", lastModified));
-				return createResponse(200, mimeType, stream.size(), stream.createInputStream(), request);
+					return createResponse(200, mimeType, size, stream.createInputStream(), request, new Pair<String, String>("Last-Modified", lastModified));
+				return createResponse(200, mimeType, size, stream.createInputStream(), request);
 			}
 		} else
 			return standardResponse(404, "No such file or directory.", request);
@@ -546,10 +554,9 @@ public abstract class WebServer<P extends WebPacket, C extends Client<P, ? exten
 	public final WebResponse createResponse(int code, String mimeType, InputStream payload, WebRequest request, Pair<String,String>... extraHeaders) {
 		return createResponse(code, summaryForCode(code), mimeType, -1, payload, request, extraHeaders);
 	}
+	private final static byte[] LR = "\r\n".getBytes(StringUtils.UTF8);
+	private final static byte[] ChunkEnd = "0\r\n\r\n".getBytes(StringUtils.UTF8);
 	public final WebResponse createResponse(int code, String codeMessage, String mimeType, long size, InputStream payload, WebRequest request, Pair<String,String>... extraHeaders) {
-		if(size < 0)
-			throw new UnsupportedOperationException();
-		
 		WebHeaders headers = new WebHeaders();
 		for(Pair<String, String> extra : extraHeaders)
 			headers.set(extra.i, extra.v);
@@ -570,6 +577,73 @@ public abstract class WebServer<P extends WebPacket, C extends Client<P, ? exten
 		String range = request.headers().take("range");
 		if(range != null) // TODO: Implement returning a range
 			return standardResponse(501, request);
+		
+		if(size < 0 && !headers.has("Transfer-Encoding")) {
+			headers.set("Transfer-Encoding", "chunked");
+			final InputStream iStream = payload;
+			payload = new EfficientInputStream() {
+				byte[] tempBuffer;
+				boolean endOfStream = false;
+				@Override
+				public int read(byte[] b, int off, int len) throws IOException {
+					if(endOfStream)
+						return -1;
+					
+					/*int max = Math.min(len, iStream.available());
+					if(max < 5) {
+						try {
+							Thread.sleep(50);
+						} catch (InterruptedException ex) {}
+						max = Math.min(len, iStream.available());
+					}
+					System.err.println("Can read " + max + "bytes");
+					if(max > 5) {
+						int offset = off+(Integer.toHexString(max) + "\r\n").getBytes(StringUtils.UTF8).length + 2;
+						int read = iStream.read(b, offset, max-offset-LR.length);
+						System.err.println("Read " + read + "bytes");
+						if(read > 0) {
+							if(read > max)
+								throw new IOException("More bytes were read than requested");
+							
+							byte[] chunkBytes = (Integer.toHexString(read) + "\r\n").getBytes(StringUtils.UTF8);
+							if(offset < chunkBytes.length) {
+								Logger.warn("A stream reported having more available bytes than it actually did. As a result data needs to be moved around.");
+								for(int i=0; i<read; i++) { // Move all bytes backwards by offset
+									b[off+chunkBytes.length+i] = b[offset+i];
+								}
+								offset = off+chunkBytes.length;
+							}
+							System.arraycopy(chunkBytes, 0, b, off, chunkBytes.length);
+							System.arraycopy(LR, 0, b, offset+read, LR.length);
+							return read + chunkBytes.length + LR.length;
+						} else
+							return read;
+					}*/
+					
+					if(tempBuffer == null)
+						tempBuffer = new byte[StreamUtils.DefaultCopySize];
+					
+					int read = Math.min(tempBuffer.length, len-20);
+					System.err.println("Reading " + read + "bytes");
+					read = iStream.read(tempBuffer, 0, read);
+					if(read < 1) {
+						if(read < 0) {
+							System.arraycopy(ChunkEnd, 0, b, off, ChunkEnd.length);
+							endOfStream = true;
+							return ChunkEnd.length;
+						}
+						return read;
+					}
+					
+					System.err.println("Read " + read + "bytes");
+					byte[] chunkBytes = (Integer.toHexString(read) + "\r\n").getBytes(StringUtils.UTF8);
+					System.arraycopy(chunkBytes, 0, b, off, chunkBytes.length);
+					System.arraycopy(tempBuffer, 0, b, off+chunkBytes.length, read);
+					System.arraycopy(LR, 0, b, off+chunkBytes.length+read, LR.length);
+					return read + chunkBytes.length + LR.length;
+				}
+			};
+		}
 		
 		return createRawResponse(code, codeMessage, headers, payload, request);
 	}
