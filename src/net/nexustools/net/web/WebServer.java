@@ -160,7 +160,16 @@ public abstract class WebServer<P extends WebPacket, C extends Client<P, ? exten
 						type = "text";
 				}
 			} catch(Throwable t) {
-				mimeType = "unknown";
+				builder.append("<error");
+				String message = t.getMessage();
+				if(message != null) {
+					builder.append(" title=\"");
+					builder.append(message);
+					builder.append("\"");
+				}
+				builder.append(">");
+				builder.append(t.getClass().getSimpleName());
+				builder.append("</error>");
 			}
 			if(preview) {
 				builder.append("<object width=\"24\" height=\"24\" data=\"");
@@ -312,7 +321,7 @@ public abstract class WebServer<P extends WebPacket, C extends Client<P, ? exten
 		if(!stream.canRead())
 			return standardResponse(403, request);
 		
-		if(stream.exists())
+		if(stream.exists()) {
 			if(stream.hasChildren()) {
 				String path = request.path();
 				if(!path.endsWith("/"))
@@ -327,9 +336,22 @@ public abstract class WebServer<P extends WebPacket, C extends Client<P, ? exten
 					throw new UnsupportedOperationException("The requested format is not supported: " + format);
 				
 				return systemPage(200, "Index Of: " + path, builder.toString(), request);
-			} else
+			} else {
+				try {
+					String lastModified = dateFormat.format(stream.lastModified());
+					String modifiedSince = request.headers().get("If-Modified-Since");
+					if(lastModified.equalsIgnoreCase(modifiedSince))
+						return createResponse(304, stream.mimeType(), 0, new InputStream() {
+							@Override
+							public int read() throws IOException {
+								return -1;
+							}
+						}, request);
+					return createResponse(200, stream.mimeType(), stream.size(), stream.createInputStream(), request, new Pair<String, String>("Last-Modified", lastModified));
+				} catch(Throwable t) {}
 				return createResponse(200, stream.mimeType(), stream.size(), stream.createInputStream(), request);
-		else
+			}
+		} else
 			return standardResponse(404, "No such file or directory.", request);
 	}
 	public final WebResponse streamResponse(String url, WebRequest request) throws IOException, URISyntaxException {

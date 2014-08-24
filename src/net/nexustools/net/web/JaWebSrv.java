@@ -10,6 +10,7 @@ import java.io.IOException;
 import net.nexustools.DefaultAppDelegate;
 import net.nexustools.net.Server.Transport;
 import net.nexustools.net.web.http.HTTPServer;
+import net.nexustools.net.web.modules.CGIModule;
 import net.nexustools.net.web.modules.FileModule;
 import net.nexustools.runtime.RunQueue;
 import net.nexustools.runtime.ThreadedRunQueue;
@@ -27,12 +28,12 @@ public class JaWebSrv extends DefaultAppDelegate {
         new JaWebSrv(args, 8080).mainLoop();
     }
 
+	final RunQueue runQueue;
     final WebServer webServer;
-	final RunQueue threadedRunQueue;
     public JaWebSrv(String[] args, int port, Transport protocol, RunQueue runQueue) throws IOException {
         super(args, "JaWebSrv", "NexusTools", runQueue);
         webServer = new HTTPServer(new FileModule("/")/*new CGIModule("/var/www/parked", "index.php", "/usr/bin/php5-cgi")*/, port, protocol, runQueue);
-		threadedRunQueue = runQueue;
+		this.runQueue = runQueue;
     }
     public JaWebSrv(String[] args, int port, Transport protocol) throws IOException {
 		this(args, port, protocol, new ThreadedRunQueue("JaWebSrv", ThreadedRunQueue.Delegator.Fair, 4f));

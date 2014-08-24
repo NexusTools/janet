@@ -12,7 +12,6 @@ import java.net.URISyntaxException;
 import net.nexustools.net.web.WebRequest;
 import net.nexustools.net.web.WebResponse;
 import net.nexustools.net.web.WebServer;
-import net.nexustools.utils.Pair;
 
 /**
  *

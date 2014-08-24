@@ -17,16 +17,16 @@ import net.nexustools.net.web.WebServer;
 public class CGIModule implements WebModule {
 	
 	private final String cgiScript;
-	private final String cgiProcess;
+	private final String cgiBinary;
 	private final String documentRoot;
-	public CGIModule(String documentRoot, String cgiScript, String cgiProcess) {
+	public CGIModule(String documentRoot, String cgiScript, String cgiBinary) {
 		this.documentRoot = documentRoot;
-		this.cgiProcess = cgiProcess;
+		this.cgiBinary = cgiBinary;
 		this.cgiScript = cgiScript;
 	}
 
 	public WebResponse handle(WebServer server, WebRequest request) throws Throwable {
-		return server.cgiResponse(documentRoot, cgiScript, cgiProcess, request);
+		return server.cgiResponse(documentRoot, cgiScript, cgiBinary, request);
 	}
     
 }
