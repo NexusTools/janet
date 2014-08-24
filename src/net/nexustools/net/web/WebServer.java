@@ -287,7 +287,7 @@ public abstract class WebServer<P extends WebPacket, C extends Client<P, ? exten
 
 
 			Logger.debug(headers.headers);
-			return createResponse(status, statusMessage, headers, new EfficientInputStream() {
+			return createRawResponse(status, statusMessage, headers, new EfficientInputStream() {
 				boolean allowDeath = false;
 				@Override
 				public int read(byte[] b, int off, int len) throws IOException {
@@ -463,12 +463,16 @@ public abstract class WebServer<P extends WebPacket, C extends Client<P, ? exten
 				Logger.gears("Unknown connection", connection);
 		}
 		
-		return createResponse(code, codeMessage, headers, payload, request);
+		String range = request.headers().take("range");
+		if(range != null) // TODO: Implement returning a range
+			return standardResponse(501, request);
+		
+		return createRawResponse(code, codeMessage, headers, payload, request);
 	}
-	public final WebResponse createResponse(int code, WebHeaders headers, InputStream payload, WebRequest request) {
-		return createResponse(code, summaryForCode(code), headers, payload, request);
+	public final WebResponse createRawResponse(int code, WebHeaders headers, InputStream payload, WebRequest request) {
+		return createRawResponse(code, summaryForCode(code), headers, payload, request);
 	}
-	public WebResponse createResponse(int code, String codeMessage, WebHeaders headers, InputStream payload, WebRequest request) {
+	public WebResponse createRawResponse(int code, String codeMessage, WebHeaders headers, InputStream payload, WebRequest request) {
 		headers.set("Server", serverName());
 		headers.set("Date", dateFormat.format(new Date()));
 		return createResponseImpl(code, codeMessage, headers, payload, request);
