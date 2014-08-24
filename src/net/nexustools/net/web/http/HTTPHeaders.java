@@ -6,12 +6,13 @@
 
 package net.nexustools.net.web.http;
 
-import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.List;
-import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import net.nexustools.io.InputLineReader;
+import net.nexustools.io.LineReader;
 import net.nexustools.net.DisconnectedException;
 import net.nexustools.net.web.WebHeaders;
 import net.nexustools.utils.Pair;
@@ -25,10 +26,14 @@ public class HTTPHeaders extends WebHeaders {
 
 	protected static final Pattern headerPattern = Pattern.compile("^([a-z][a-z0-9_\\-]*): (.+)$", Pattern.CASE_INSENSITIVE);
 	
-	public void parse(BufferedReader reader) throws IOException {
+	public void parse(InputStream inputStream) throws IOException {
+		parse(inputStream, new InputLineReader(inputStream) {});
+	}
+	public void parse(InputStream inputStream, LineReader lineReader) throws IOException {
+		System.out.println("Parsing Headers");
 		String line;
         while(true) {
-            line = reader.readLine();
+			Logger.debug(line = lineReader.readNext());
             if(line == null)
                 throw new DisconnectedException();
             if(line.trim().length() < 1)
@@ -46,7 +51,12 @@ public class HTTPHeaders extends WebHeaders {
 		Logger.debug(headers);
 		for(Pair<String,List<String>> bundle : headers) {
 			for(String value : bundle.v) {
-				headerBuilder.append(bundle.i);
+				String key = bundle.i;
+				key = key.substring(0, 1).toUpperCase() + key.substring(1);
+				int pos = 0;
+				while((pos = key.indexOf("-", pos)+1) > 0)
+					key = key.substring(0, pos) + key.substring(pos, pos+1).toUpperCase() + key.substring(pos+1);
+				headerBuilder.append(key);
 				headerBuilder.append(": ");
 				headerBuilder.append(value);
 				headerBuilder.append("\r\n");

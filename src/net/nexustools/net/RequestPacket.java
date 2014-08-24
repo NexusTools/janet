@@ -16,7 +16,7 @@ package net.nexustools.net;
 
 import java.util.Collection;
 import net.nexustools.concurrent.DefaultPropMap;
-import net.nexustools.concurrent.MapAccessor;
+import net.nexustools.data.accessor.MapAccessor;
 import net.nexustools.concurrent.PropMap;
 import net.nexustools.concurrent.logic.Reader;
 import net.nexustools.concurrent.logic.WriteReader;

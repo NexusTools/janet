@@ -12,21 +12,12 @@ import net.nexustools.net.web.WebServer;
 
 /**
  *
- * @author kate
+ * @author katelyn
  */
-public class CGIModule implements WebModule {
-	
-	private final String cgiScript;
-	private final String cgiProcess;
-	private final String documentRoot;
-	public CGIModule(String documentRoot, String cgiScript, String cgiProcess) {
-		this.documentRoot = documentRoot;
-		this.cgiProcess = cgiProcess;
-		this.cgiScript = cgiScript;
-	}
+public class WebSocketModule implements WebModule {
 
 	public WebResponse handle(WebServer server, WebRequest request) throws Throwable {
-		return server.cgiResponse(documentRoot, cgiScript, cgiProcess, request);
+		return null;
 	}
-    
+	
 }

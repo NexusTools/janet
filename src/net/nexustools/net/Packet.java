@@ -17,7 +17,7 @@ package net.nexustools.net;
 
 import java.io.IOException;
 import net.nexustools.concurrent.Prop;
-import net.nexustools.concurrent.PropAccessor;
+import net.nexustools.data.accessor.PropAccessor;
 import net.nexustools.concurrent.logic.SoftWriteReader;
 import net.nexustools.data.Adaptor;
 import net.nexustools.data.AdaptorException;

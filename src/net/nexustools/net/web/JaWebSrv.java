@@ -19,6 +19,7 @@ import net.nexustools.runtime.ThreadedRunQueue;
  * @author kate
  */
 public class JaWebSrv extends DefaultAppDelegate {
+	
     /**
      * @param args the command line arguments
      */
@@ -30,11 +31,11 @@ public class JaWebSrv extends DefaultAppDelegate {
 	final RunQueue threadedRunQueue;
     public JaWebSrv(String[] args, int port, Transport protocol, RunQueue runQueue) throws IOException {
         super(args, "JaWebSrv", "NexusTools", runQueue);
-        webServer = new HTTPServer(new FileModule("/"), port, protocol, runQueue);
+        webServer = new HTTPServer(new FileModule("/")/*new CGIModule("/var/www/parked", "index.php", "/usr/bin/php5-cgi")*/, port, protocol, runQueue);
 		threadedRunQueue = runQueue;
     }
     public JaWebSrv(String[] args, int port, Transport protocol) throws IOException {
-		this(args, port, protocol, new ThreadedRunQueue("JaWebSrv", 4f));
+		this(args, port, protocol, new ThreadedRunQueue("JaWebSrv", ThreadedRunQueue.Delegator.Fair, 4f));
     }
     public JaWebSrv(String[] args, int port) throws IOException {
 		this(args, port, Transport.TCP);

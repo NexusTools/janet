@@ -14,6 +14,7 @@ import net.nexustools.net.Packet;
 import net.nexustools.net.SimplePacketTransport;
 import net.nexustools.net.web.WebHeaders;
 import net.nexustools.net.web.WebPacket;
+import net.nexustools.net.web.WebRequest;
 import net.nexustools.net.web.WebResponse;
 import net.nexustools.net.web.WebServer;
 import net.nexustools.net.web.modules.WebModule;
@@ -40,7 +41,7 @@ public class HTTPServer<P extends WebPacket, C extends Client<P, ? extends HTTPS
     }
 
 	@Override
-	public WebResponse createResponse(int code, String codeMessage, WebHeaders headers, InputStream payload) {
+	protected WebResponse createResponseImpl(int code, String codeMessage, WebHeaders headers, InputStream payload, WebRequest request) {
 		return new HTTPResponse(code, codeMessage, headers, payload);
 	}
     

@@ -17,11 +17,13 @@ package net.nexustools.net;
 
 import java.io.IOException;
 import java.net.Socket;
+import java.net.SocketException;
 import java.util.List;
+import java.util.logging.Level;
 import javax.activation.UnsupportedDataTypeException;
 import net.nexustools.concurrent.Condition;
 import net.nexustools.concurrent.DefaultPropMap;
-import net.nexustools.concurrent.ListAccessor;
+import net.nexustools.data.accessor.ListAccessor;
 import net.nexustools.concurrent.Prop;
 import net.nexustools.concurrent.PropList;
 import net.nexustools.concurrent.logic.Writer;
@@ -72,6 +74,8 @@ public class Client<P extends Packet, S extends Server<P, ?>> {
 					runQueue.push(packetProcessor(packet));
 				}
 			} catch (DisconnectedException ex) {
+				Logger.exception(Logger.Level.Gears, ex);
+			} catch (SocketException ex) {
 				Logger.exception(Logger.Level.Gears, ex);
 			} catch (IOException ex) {
 				Logger.exception(ex);
@@ -280,6 +284,15 @@ public class Client<P extends Packet, S extends Server<P, ?>> {
 
 	public boolean isConnected() {
 		return isAlive.get();
+	}
+	
+	public void kill() {
+		try {
+			socket.i.close();
+		} catch (IOException ex) {}
+		try {
+			socket.v.close();
+		} catch (IOException ex) {}
 	}
 
 }

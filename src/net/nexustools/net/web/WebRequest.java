@@ -6,9 +6,10 @@
 
 package net.nexustools.net.web;
 
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
 import java.util.Map;
 import net.nexustools.net.Client;
-import net.nexustools.net.Packet;
 import net.nexustools.utils.log.Logger;
 
 /**
@@ -31,6 +32,28 @@ public abstract class WebRequest<T, C extends Client, S extends WebServer> exten
     
 	public abstract WebHeaders headers();
     public abstract Map<String,String> request(Scope scope);
+	
+	public String requestString(Scope scope) {
+		Map<String,String> map = request(scope);
+		StringBuilder builder = new StringBuilder();
+		
+		boolean addAnd = false;
+		for(Map.Entry<String, String> entry : map.entrySet()) {
+			if(addAnd)
+				builder.append('&');
+			else
+				addAnd = true;
+			
+			try {
+				builder.append(URLEncoder.encode(entry.getKey(), "UTF-8"));
+				builder.append('=');
+				builder.append(URLEncoder.encode(entry.getValue(), "UTF-8"));
+			} catch (UnsupportedEncodingException ex) {
+				throw new RuntimeException(ex);
+			}
+		}
+		return "";
+	}
 
     @Override
     protected void recvFromClient(C client, S server) {
@@ -38,9 +61,9 @@ public abstract class WebRequest<T, C extends Client, S extends WebServer> exten
         try {
 			response = server.module().handle(server, this);
             if(response == null)
-				response = server.standardResponse(400);
+				response = server.standardResponse(404, this);
         } catch(Throwable t) {
-            response = server.exceptionResponse(t);
+            response = server.exceptionResponse(t, this);
         }
 		Logger.debug("Sending response", response);
 		client.send(response);

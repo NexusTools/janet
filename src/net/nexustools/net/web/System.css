@@ -1,0 +1,6 @@
+@import url("//raw.githubusercontent.com/NexusTools/NexusFramework/master/resources/themes/NexusFramework/css/widgets.css");
+@import url("//raw.githubusercontent.com/NexusTools/NexusFramework/master/resources/stylesheets/dirlisting.css");
+
+tr.hidden {
+    display: none;
+}

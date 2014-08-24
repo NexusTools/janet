@@ -24,27 +24,49 @@ public class WebHeaders implements Iterable<Pair<String, List<String>>> {
 	
 	public String get(String key) {
 		try {
-			return gets(key).get(0);
+			return gets(key.toLowerCase()).get(0);
 		} catch(IndexOutOfBoundsException ex) {
+			return null;
+		} catch(NullPointerException ex) {
 			return null;
 		}
 	}
+	public String get(String key, String def) {
+		String val = null;
+		try {
+			val = gets(key.toLowerCase()).get(0);
+		} catch(IndexOutOfBoundsException ex) {
+		} catch(NullPointerException ex) {}
+		return val == null ? def : val;
+	}
+	public String take(String key) {
+		try {
+			return takes(key.toLowerCase()).get(0);
+		} catch(IndexOutOfBoundsException ex) {
+			return null;
+		} catch(NullPointerException ex) {
+			return null;
+		}
+	}
+	public List<String> takes(String key) {
+		return headers.remove(key.toLowerCase());
+	}
 	public List<String> gets(String key) {
-		return headers.get(key);
+		return headers.get(key.toLowerCase());
 	}
 	public boolean has(String key) {
-		return headers.containsKey(key);
+		return headers.containsKey(key.toLowerCase());
 	}
 	public void add(String key, String val) {
-		List<String> list = headers.get(key);
+		List<String> list = headers.get(key.toLowerCase());
 		if(list == null)
-			headers.put(key, list = new ArrayList());
+			headers.put(key.toLowerCase(), list = new ArrayList());
 		list.add(val);
 	}
 	public void set(String key, String val) {
-		List<String> list = headers.get(key);
+		List<String> list = headers.get(key.toLowerCase());
 		if(list == null)
-			headers.put(key, list = new ArrayList());
+			headers.put(key.toLowerCase(), list = new ArrayList());
 		else
 			list.clear();
 		list.add(val);
@@ -64,6 +86,11 @@ public class WebHeaders implements Iterable<Pair<String, List<String>>> {
 				throw new UnsupportedOperationException("Not supported yet.");
 			}
 		};
+	}
+
+	@Override
+	public String toString() {
+		return headers.toString();
 	}
 	
 }

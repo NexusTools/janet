@@ -6,13 +6,14 @@
 
 package net.nexustools.net.web.http;
 
-import java.io.BufferedReader;
+import java.io.BufferedInputStream;
 import java.io.IOException;
-import java.io.InputStreamReader;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import net.nexustools.io.DataInputStream;
+import net.nexustools.io.InputLineReader;
 import net.nexustools.net.Client;
 import net.nexustools.net.DisconnectedException;
 import net.nexustools.net.web.WebHeaders;
@@ -33,15 +34,16 @@ public class HTTPRequest<T, C extends Client, S extends HTTPServer> extends WebR
 
 	@Override
 	public void read(DataInputStream dataInput, C client) throws UnsupportedOperationException, IOException {
-        BufferedReader reader = new BufferedReader(new InputStreamReader(dataInput));
-        String line = reader.readLine();
+        BufferedInputStream buffInputStream = new BufferedInputStream(dataInput);
+		InputLineReader reader = new InputLineReader(buffInputStream);
+        String line = reader.readNext();
         if(line == null)
             throw new DisconnectedException();
         if(line.trim().length() < 1)
             throw new RuntimeException("Missing HTTP Status Line");
         readHeader(line, client);
         
-		(headers = new HTTPHeaders()).parse(reader);
+		(headers = new HTTPHeaders()).parse(buffInputStream, reader);
 	}
 
 //    @Override
@@ -73,7 +75,7 @@ public class HTTPRequest<T, C extends Client, S extends HTTPServer> extends WebR
 
 	@Override
 	public Map<String, String> request(Scope scope) {
-		throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+		return new HashMap<String, String>();
 	}
     
 }

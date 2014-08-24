@@ -12,6 +12,7 @@ import java.net.URISyntaxException;
 import net.nexustools.net.web.WebRequest;
 import net.nexustools.net.web.WebResponse;
 import net.nexustools.net.web.WebServer;
+import net.nexustools.utils.Pair;
 
 /**
  *
@@ -33,7 +34,18 @@ public class StreamModule implements WebModule {
 	
     @Override
     public WebResponse handle(WebServer server, WebRequest request) throws IOException, URISyntaxException {
-		return server.streamResponse(documentRoot + request.path(), request.path());
+		if(!request.method().equalsIgnoreCase("get") && !request.method().equalsIgnoreCase("post"))
+			throw new IOException(request.method() + " method is not supported by StreamModule");
+		
+		String connection = request.headers().get("connection");
+		if(connection != null) {
+			if(!connection.equalsIgnoreCase("keep-alive") && connection.equalsIgnoreCase("close")) {
+				request.headers().set("Connection", "Close");
+				return server.standardResponse(501, "Unknown Connection Type", request);
+			}
+		}
+		
+		return server.streamResponse(documentRoot + request.path(), request);
     }
     
 }
