@@ -4,7 +4,7 @@
  * and open the template in the editor.
  */
 
-package net.nexustools.net.web.modules;
+package net.nexustools.net.web.handlers;
 
 import net.nexustools.net.web.WebRequest;
 import net.nexustools.net.web.WebResponse;
@@ -12,10 +12,12 @@ import net.nexustools.net.web.WebServer;
 
 /**
  *
- * @author kate
+ * @author katelyn
  */
-public interface WebModule {
-    
-    public WebResponse handle(WebServer server, WebRequest request) throws Throwable;
-    
+public class WebSocketUpgradeHandler implements WebRequestHandler {
+
+	public WebResponse handle(WebServer server, WebRequest request) throws Throwable {
+		return null;
+	}
+	
 }

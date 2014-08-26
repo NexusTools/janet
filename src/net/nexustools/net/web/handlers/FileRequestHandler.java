@@ -4,18 +4,18 @@
  * and open the template in the editor.
  */
 
-package net.nexustools.net.web.modules;
+package net.nexustools.net.web.handlers;
 
 /**
  *
  * @author katelyn
  */
-public class FileModule extends StreamModule {
+public class FileRequestHandler extends StreamRequestHandler {
 	
-	public FileModule(String path, String authGET) {
+	public FileRequestHandler(String path, String authGET) {
 		super("file://" + path, authGET);
 	}
-	public FileModule(String path) {
+	public FileRequestHandler(String path) {
 		this("file://" + path, null);
 	}
 	

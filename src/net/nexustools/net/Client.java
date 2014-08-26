@@ -20,8 +20,6 @@ import java.lang.reflect.InvocationTargetException;
 import java.net.Socket;
 import java.net.SocketException;
 import java.util.List;
-import java.util.logging.Level;
-import javax.activation.UnsupportedDataTypeException;
 import net.nexustools.concurrent.Condition;
 import net.nexustools.concurrent.DefaultPropMap;
 import net.nexustools.data.accessor.ListAccessor;
@@ -33,7 +31,7 @@ import net.nexustools.event.EventDispatcher;
 import net.nexustools.io.DataInputStream;
 import net.nexustools.io.DataOutputStream;
 import net.nexustools.net.ClientListener.ClientEvent;
-import net.nexustools.net.Server.Transport;
+import net.nexustools.net.Server.Protocol;
 import net.nexustools.runtime.FairTaskDelegator.FairRunnable;
 import net.nexustools.runtime.RunQueue;
 import net.nexustools.runtime.ThreadedRunQueue;
@@ -106,14 +104,14 @@ public class Client<P extends Packet, S extends Server<P, ?>> {
 		}
 	}
 	
-	public static Socket open(String host, int port, Transport protocol) throws IOException {
+	public static Socket open(String host, int port, Protocol protocol) throws IOException {
 		switch(protocol) {
 			case TCP:
 				Logger.gears("Opening TCP Socket", host, port);
 				return new Socket(host, port);
 		}
 		
-		throw new UnsupportedDataTypeException();
+		throw new UnsupportedOperationException();
 	}
 	
 	protected final RunQueue runQueue;
@@ -204,10 +202,10 @@ public class Client<P extends Packet, S extends Server<P, ?>> {
 		
 		receiveThread.start();
 	}
-	public Client(String host, int port, Transport protocol, RunQueue runQueue, PacketTransport packetRegistry) throws IOException {
+	public Client(String host, int port, Protocol protocol, RunQueue runQueue, PacketTransport packetRegistry) throws IOException {
 		this(open(host, port, protocol), runQueue, packetRegistry);
 	}
-	public Client(String name, String host, int port, Transport protocol, PacketTransport packetRegistry) throws IOException {
+	public Client(String name, String host, int port, Protocol protocol, PacketTransport packetRegistry) throws IOException {
 		this(host, port, protocol, new ThreadedRunQueue(name), packetRegistry);
 	}
 	
@@ -217,8 +215,8 @@ public class Client<P extends Packet, S extends Server<P, ?>> {
 	
 	protected void writeQueue() {
 		currentClient.set(this);
-		List<P> packets = packetQueue.take();
-		Logger.gears("Writing", packets.size(), "packets", this);
+		ListAccessor<P> packets = packetQueue.take();
+		Logger.gears("Writing", packets.length(), "packets", this);
 		for(final P packet : packets)
 			shutdown.ifRun(new Runnable() {
 				public void run() {
@@ -232,7 +230,8 @@ public class Client<P extends Packet, S extends Server<P, ?>> {
 						packet.sendComplete(Client.this);
 					} catch (Throwable t) {
 						packet.failedToSend(Client.this, t);
-						Logger.exception(t);
+						if(!(t instanceof SocketException))
+							Logger.exception(t);
 					}
 				}
 			});

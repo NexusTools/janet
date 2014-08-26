@@ -8,14 +8,20 @@ package net.nexustools.net.web.http;
 
 import java.io.BufferedInputStream;
 import java.io.IOException;
+import java.util.EventListener;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.zip.GZIPInputStream;
+import net.nexustools.event.ForwardingEventDispatcher;
 import net.nexustools.io.DataInputStream;
 import net.nexustools.io.InputLineReader;
 import net.nexustools.net.Client;
 import net.nexustools.net.DisconnectedException;
+import net.nexustools.net.web.ConnectionClosedListener;
+import net.nexustools.net.web.ConnectionClosedListener.ConnectionClosedEvent;
 import net.nexustools.net.web.WebHeaders;
 import net.nexustools.net.web.WebRequest;
+import net.nexustools.runtime.RunQueue;
 import net.nexustools.utils.ArgumentMap;
 import net.nexustools.utils.log.Logger;
 
@@ -34,6 +40,13 @@ public class HTTPRequest<T, C extends Client, S extends HTTPServer> extends WebR
 	ArgumentMap POST = new ArgumentMap();
 	ArgumentMap COOKIE = new ArgumentMap();
 	HTTPHeaders headers;
+	
+	
+	
+	final ForwardingEventDispatcher<?, ConnectionClosedListener, ConnectionClosedEvent> connectionDispatcher;
+	public HTTPRequest(RunQueue runQueue) {
+		connectionDispatcher = new ForwardingEventDispatcher(runQueue);
+	}
 
 	@Override
 	public void read(DataInputStream dataInput, C client) throws UnsupportedOperationException, IOException {
@@ -129,6 +142,24 @@ public class HTTPRequest<T, C extends Client, S extends HTTPServer> extends WebR
 		}
 		
 		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public boolean acceptsEncoding(String request) {
+		try {
+			for(String encoding : headers().get("Accept-Encoding").split(","))
+				if(encoding.equalsIgnoreCase(request))
+					return true;
+		} catch(Throwable t) {
+			Logger.exception(Logger.Level.Gears, t);
+		}
+			
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public void addConnectionListener(ConnectionClosedListener listener) {
+		
 	}
     
 }

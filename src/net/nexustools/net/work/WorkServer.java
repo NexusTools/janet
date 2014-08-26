@@ -22,10 +22,10 @@ public abstract class WorkServer<W extends WorkPacket, P extends Packet, C exten
 
 	final PropList<C> clientQueue = new PropList();
     private final PropList<W> workQueue = new PropList();
-    public WorkServer(int port, Transport protocol, PacketTransport packetRegistry) throws IOException {
+    public WorkServer(int port, Protocol protocol, PacketTransport packetRegistry) throws IOException {
         super(port, protocol, packetRegistry);
     }
-    public WorkServer(int port, Transport protocol, PacketTransport packetRegistry, RunQueue runQueue) throws IOException {
+    public WorkServer(int port, Protocol protocol, PacketTransport packetRegistry, RunQueue runQueue) throws IOException {
         super(port, protocol, packetRegistry, runQueue);
     }
 

@@ -4,7 +4,7 @@
  * and open the template in the editor.
  */
 
-package net.nexustools.net.web.modules;
+package net.nexustools.net.web.handlers;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -13,23 +13,24 @@ import net.nexustools.net.web.WebRequest;
 import net.nexustools.net.web.WebResponse;
 import net.nexustools.net.web.WebServer;
 import net.nexustools.utils.Testable;
+import net.nexustools.utils.log.Logger;
 
 /**
  *
  * @author katelyn
  */
-public class MatchModule implements WebModule {
+public class MatchRequestHandler implements WebRequestHandler {
 	
-	final WebModule def;
-	final LinkedHashMap<Testable<WebRequest>, WebModule> moduleMap = new LinkedHashMap();
-	public MatchModule(WebModule def) {
+	final WebRequestHandler def;
+	final LinkedHashMap<Testable<WebRequest>, WebRequestHandler> moduleMap = new LinkedHashMap();
+	public MatchRequestHandler(WebRequestHandler def) {
 		this.def = def;
 	}
-	public MatchModule() {
+	public MatchRequestHandler() {
 		this(null);
 	}
 	
-	public void add(Testable<WebRequest> matcher, WebModule module) {
+	public void add(Testable<WebRequest> matcher, WebRequestHandler module) {
 		moduleMap.put(matcher, module);
 	}
 	public void remove(Testable<WebRequest> matcher) {
@@ -37,10 +38,14 @@ public class MatchModule implements WebModule {
 	}
 
 	public WebResponse handle(WebServer server, WebRequest request) throws Throwable {
-		ArrayList<WebModule> modules = new ArrayList();
-		for(Map.Entry<Testable<WebRequest>, WebModule> entry : moduleMap.entrySet())
-			if(entry.getKey().test(request))
-				modules.add(entry.getValue());
+		ArrayList<WebRequestHandler> modules = new ArrayList();
+		for(Map.Entry<Testable<WebRequest>, WebRequestHandler> entry : moduleMap.entrySet())
+			try {
+				if(entry.getKey().test(request))
+					modules.add(entry.getValue());
+			} catch(Throwable t) {
+				Logger.exception(Logger.Level.Gears, t);
+			}
 		
 		return server.tryHandle(server, request, modules, def);
 	}

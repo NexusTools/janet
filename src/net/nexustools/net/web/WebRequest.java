@@ -30,12 +30,15 @@ public abstract class WebRequest<T, C extends Client, S extends WebServer> exten
 		ALL
 	}
     
-    public abstract String method();
     public abstract String requestURI();
+    public abstract String method();
     public abstract String path();
     
 	public abstract WebHeaders headers();
     public abstract ArgumentMap arguments(Scope scope);
+	public abstract boolean acceptsEncoding(String encoding);
+	
+	public abstract void addConnectionListener(ConnectionClosedListener listener);
 	
 	public String requestString(Scope scope) {
 		ArgumentMap map = arguments(scope);

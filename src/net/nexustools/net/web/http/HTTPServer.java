@@ -17,7 +17,7 @@ import net.nexustools.net.web.WebPacket;
 import net.nexustools.net.web.WebRequest;
 import net.nexustools.net.web.WebResponse;
 import net.nexustools.net.web.WebServer;
-import net.nexustools.net.web.modules.WebModule;
+import net.nexustools.net.web.handlers.WebRequestHandler;
 import net.nexustools.runtime.RunQueue;
 
 /**
@@ -27,17 +27,21 @@ import net.nexustools.runtime.RunQueue;
 public class HTTPServer<P extends WebPacket, C extends Client<P, ? extends HTTPServer>> extends WebServer<P, C> {
 	
 	public static class HTTPTransport extends SimplePacketTransport<WebPacket> {
+		final RunQueue runQueue;
+		public HTTPTransport(RunQueue runQueue) {
+			this.runQueue = runQueue;
+		}
 		@Override
 		public WebPacket create(int id) {
-			return new HTTPRequest();
+			return new HTTPRequest(runQueue);
 		}
 	}
 
-    public HTTPServer(WebModule module, int port, Transport protocol, RunQueue runQueue) throws IOException {
-        super(module, port, protocol, new HTTPTransport(), runQueue);
+    public HTTPServer(WebRequestHandler module, int port, Protocol protocol, RunQueue runQueue, Object... args) throws IOException {
+        super(module, port, protocol, new HTTPTransport(runQueue), runQueue, args);
     }
-    public HTTPServer(WebModule module, int port, Transport protocol) throws IOException {
-        super(module, port, protocol, new HTTPTransport());
+    public HTTPServer(WebRequestHandler module, int port, Protocol protocol, Object... args) throws IOException {
+        super(module, port, protocol, new HTTPTransport(RunQueue.current()), args);
     }
 
 	@Override

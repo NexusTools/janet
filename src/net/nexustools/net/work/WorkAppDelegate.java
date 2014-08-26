@@ -10,7 +10,7 @@ import java.io.IOException;
 import java.net.Socket;
 import net.nexustools.net.DefaultPacketTransport;
 import net.nexustools.net.PacketTransport;
-import net.nexustools.net.Server.Transport;
+import net.nexustools.net.Server.Protocol;
 import net.nexustools.net.ServerAppDelegate;
 
 /**
@@ -38,7 +38,7 @@ public abstract class WorkAppDelegate<C extends WorkClient, S extends WorkServer
     
     @Override
     protected C createClient(String host, int port) throws IOException {
-        return (C)new WorkClient(host, port, Transport.TCP, runQueue, packetRegistry);
+        return (C)new WorkClient(host, port, Protocol.TCP, runQueue, packetRegistry);
     }
     
     @Override
@@ -48,7 +48,7 @@ public abstract class WorkAppDelegate<C extends WorkClient, S extends WorkServer
 
     @Override
     protected S createServer(int port) throws IOException {
-        return (S)new WorkServer(port, Transport.TCP, packetRegistry, runQueue) {
+        return (S)new WorkServer(port, Protocol.TCP, packetRegistry, runQueue) {
             @Override
             public WorkPacket nextWork(WorkClient client) {
                 WorkPacket work = super.nextWork(client);

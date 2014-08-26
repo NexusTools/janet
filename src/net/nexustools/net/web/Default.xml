@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+To change this license header, choose License Headers in Project Properties.
+To change this template file, choose Tools | Templates
+and open the template in the editor.
+-->
+
+
+<Config>
+    <References>
+        <FileModule name="RootFS" root="/" />
+    </References>
+    <Servers>
+        <HTTPServer port="80">
+            <Reference name="RootFS" />
+        </HTTPServer>
+        <HTTPServer port="443" protocol="SSLvTCP" key="resource:/net/nexustools/net/web/Default.jks" keypass="Default">
+            <Reference name="RootFS" />
+        </HTTPServer>
+    </Servers>
+</Config>

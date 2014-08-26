@@ -8,10 +8,12 @@ package net.nexustools.net.web.http;
 
 import java.io.IOException;
 import java.io.InputStream;
+
 import net.nexustools.io.DataOutputStream;
 import net.nexustools.net.Client;
 import net.nexustools.net.web.WebHeaders;
 import net.nexustools.net.web.WebResponse;
+import net.nexustools.net.web.WebServer;
 import net.nexustools.utils.StringUtils;
 import net.nexustools.utils.log.Logger;
 
@@ -36,17 +38,10 @@ public class HTTPResponse<T, C extends Client, S extends HTTPServer> extends Web
     @Override
     public void write(DataOutputStream dataOutput, C client) throws UnsupportedOperationException, IOException {
 		String connection = headers.get("connection");
-		if(connection == null) {
-			Logger.debug("Determining Connection");
-			if(headers.has("content-length"))
-				connection = "keep-alive";
-			else
-				connection = "close";
-			headers.set("connection", connection);
-			Logger.debug(connection);
-		}
-		boolean close = !connection.equalsIgnoreCase("keep-alive");
+		//if(connection == null)
+			headers.set("connection", connection = "close");
 		
+		boolean close = !connection.equalsIgnoreCase("keep-alive");
 		Logger.debug("Writing Headers", headers);
         {
             StringBuilder headerBuilder = new StringBuilder();
@@ -64,12 +59,14 @@ public class HTTPResponse<T, C extends Client, S extends HTTPServer> extends Web
         byte[] buffer = new byte[1024 * 1024 * 4]; // 4MB Buffer
         while((read = payload.read(buffer)) > 0)
             dataOutput.write(buffer, 0, read);
-		
-		if(close) {
-			dataOutput.write("\r\n".getBytes(StringUtils.UTF8));
+        payload.close();
+
+		//if(close)
 			dataOutput.close();
-		} else
-			dataOutput.flush();
+		//else {
+		//	dataOutput.write(WebServer.LR);
+		//	dataOutput.flush();
+		//}
     }
 
 	@Override

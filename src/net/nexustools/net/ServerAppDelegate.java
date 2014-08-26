@@ -17,7 +17,7 @@ package net.nexustools.net;
 import java.net.Socket;
 import java.io.IOException;
 import net.nexustools.DefaultAppDelegate;
-import net.nexustools.net.Server.Transport;
+import net.nexustools.net.Server.Protocol;
 import net.nexustools.runtime.ThreadedRunQueue;
 import net.nexustools.utils.log.Logger;
 import net.nexustools.concurrent.Prop;
@@ -47,7 +47,7 @@ public abstract class ServerAppDelegate<C extends Client, S extends Server> exte
     protected abstract void populate(PacketTransport registry) throws NoSuchMethodException;
 
     protected C createClient(String host, int port) throws IOException {
-        return (C) new Client(name + "Client", host, port, Transport.TCP, packetRegistry);
+        return (C) new Client(name + "Client", host, port, Protocol.TCP, packetRegistry);
     }
 
     protected C createClient(Socket socket, S server) throws IOException {
@@ -55,7 +55,7 @@ public abstract class ServerAppDelegate<C extends Client, S extends Server> exte
     }
 
     protected S createServer(int port) throws IOException {
-        return (S) new Server(port, Transport.TCP, packetRegistry, runQueue);
+        return (S) new Server(port, Protocol.TCP, packetRegistry, runQueue);
     }
 
     protected abstract void launchClient(C client);

@@ -4,18 +4,12 @@
  * and open the template in the editor.
  */
 
-package net.nexustools.net.web;
-
-import java.io.IOException;
+package net.nexustools.net.mail;
 
 /**
  *
  * @author katelyn
  */
-public class CGIException extends IOException {
-
-	public CGIException(String message, Throwable throwable) {
-		super(message, throwable);
-	}
+public class JaMailSrv {
 	
 }

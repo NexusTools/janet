@@ -30,10 +30,9 @@ public class HTTPHeaders extends WebHeaders {
 		parse(inputStream, new InputLineReader(inputStream) {});
 	}
 	public void parse(InputStream inputStream, LineReader lineReader) throws IOException {
-		System.out.println("Parsing Headers");
 		String line;
         while(true) {
-			Logger.debug(line = lineReader.readNext());
+			Logger.gears(line = lineReader.readNext());
             if(line == null)
                 throw new DisconnectedException();
             if(line.trim().length() < 1)
@@ -43,12 +42,11 @@ public class HTTPHeaders extends WebHeaders {
 			if(!matcher.matches())
 				throw new IOException("Corrupt header.");
 			
-			add(matcher.group(1), matcher.group(2));
+			add(matcher.group(1), matcher.group(2).trim());
         }
 	}
 
 	static void write(WebHeaders headers, StringBuilder headerBuilder) {
-		Logger.debug(headers);
 		for(Pair<String,List<String>> bundle : headers) {
 			for(String value : bundle.v) {
 				String key = bundle.i;

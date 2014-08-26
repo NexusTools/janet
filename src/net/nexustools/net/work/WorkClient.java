@@ -11,7 +11,7 @@ import java.net.Socket;
 import net.nexustools.net.Client;
 import net.nexustools.net.Packet;
 import net.nexustools.net.PacketTransport;
-import net.nexustools.net.Server.Transport;
+import net.nexustools.net.Server.Protocol;
 import net.nexustools.runtime.RunQueue;
 import net.nexustools.utils.log.Logger;
 
@@ -24,7 +24,7 @@ public class WorkClient<W extends WorkPacket, P extends Packet, S extends WorkSe
     public WorkClient(Socket socket, final WorkServer server) throws IOException {
         super(socket, server);
     }
-    public WorkClient(String host, int port, Transport protocol, RunQueue runQueue, PacketTransport packetRegistry) throws IOException {
+    public WorkClient(String host, int port, Protocol protocol, RunQueue runQueue, PacketTransport packetRegistry) throws IOException {
         super(host, port, protocol, runQueue, packetRegistry);
         requestWork();
     }
