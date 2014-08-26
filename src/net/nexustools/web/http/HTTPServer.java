@@ -8,9 +8,7 @@ package net.nexustools.web.http;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.Socket;
 import net.nexustools.janet.Client;
-import net.nexustools.janet.Packet;
 import net.nexustools.janet.SimplePacketTransport;
 import net.nexustools.web.WebHeaders;
 import net.nexustools.web.WebPacket;

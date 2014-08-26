@@ -50,14 +50,14 @@ public class CGIRequestHandler implements WebRequestHandler {
 		try {
 			File rootFile = new File(cgiProcess);
 			if(!rootFile.exists())
-				return server.systemPage(494, "CGI Script Missing", cgiProcess + " does not exist.", request);
+				return server.systemPage(404, "CGI Script Missing", cgiProcess + " does not exist.", request);
 			if(!rootFile.canRead())
 				return server.systemPage(403, "CGI Permission Denied", cgiProcess + " does not have read access from the server.", request);
 			if(!rootFile.canExecute())
 				return server.systemPage(403, "CGI Permission Denied", cgiProcess + " does not have executable access from the server.", request);
 			rootFile = new File(documentRoot);
 			if(!rootFile.exists())
-				return server.systemPage(494, "Document Root Missing", documentRoot + " does not exist.", request);
+				return server.systemPage(404, "Document Root Missing", documentRoot + " does not exist.", request);
 			if(!rootFile.canRead())
 				return server.systemPage(403, "Root Permission Denied", documentRoot + " does not have read access from the server.", request);
 			ProcessBuilder builder = new ProcessBuilder(cgiProcess).directory(rootFile);
@@ -65,7 +65,7 @@ public class CGIRequestHandler implements WebRequestHandler {
 			String scriptPath = documentRoot + cgiScript;
 			rootFile = new File(scriptPath);
 			if(!rootFile.exists())
-				return server.systemPage(494, "File Not Found", scriptPath + " does not exist.", request);
+				return server.systemPage(404, "File Not Found", scriptPath + " does not exist.", request);
 			if(!rootFile.canRead())
 				return server.systemPage(403, "Root Permission Denied", scriptPath + " does not have read access from the server.", request);
 

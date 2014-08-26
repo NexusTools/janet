@@ -6,35 +6,26 @@
 
 package net.nexustools.web;
 
-import java.io.BufferedInputStream;
 import java.io.ByteArrayInputStream;
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.URISyntaxException;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
 import java.util.Date;
-import java.util.List;
-import java.util.Map;
-import java.util.logging.Level;
-
 import net.nexustools.Application;
 import net.nexustools.concurrent.Prop;
+import net.nexustools.data.buffer.basic.StringList;
 import net.nexustools.io.EfficientInputStream;
-import net.nexustools.io.EfficientOutputStream;
 import net.nexustools.io.Stream;
 import net.nexustools.io.StreamUtils;
 import net.nexustools.janet.Client;
 import net.nexustools.janet.PacketTransport;
 import net.nexustools.janet.Server;
-import net.nexustools.web.http.HTTPHeaders;
-import net.nexustools.web.handlers.WebRequestHandler;
 import net.nexustools.runtime.RunQueue;
 import net.nexustools.utils.ArgumentMap;
 import net.nexustools.utils.Pair;
 import net.nexustools.utils.StringUtils;
 import net.nexustools.utils.log.Logger;
+import net.nexustools.web.handlers.WebRequestHandler;
 
 /**
  *
@@ -45,8 +36,8 @@ public abstract class WebServer<P extends WebPacket, C extends Client<P, ? exten
 	public static final SimpleDateFormat dateFormat = new SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss zzz");
 
     private Prop<WebRequestHandler> module;
-	protected final ArrayList<String> systemStyles = new ArrayList();
-	protected final ArrayList<String> systemScripts = new ArrayList();
+	protected final StringList systemStyles = new StringList();
+	protected final StringList systemScripts = new StringList();
     public WebServer(WebRequestHandler module, int port, Protocol protocol, PacketTransport registry, RunQueue runQueue, Object... args) throws IOException {
         super(port, protocol, registry, runQueue, args);
         this.module = new Prop(module);
@@ -74,8 +65,8 @@ public abstract class WebServer<P extends WebPacket, C extends Client<P, ? exten
         this(module, 80);
     }
 	
-	private void init() {
-		systemStyles.add("resource:/net/nexustools/net/web/System.css");
+	protected void init() {
+		systemStyles.push("resource:/net/nexustools/web/System.css");
 	}
 	
 	public String serverName() {

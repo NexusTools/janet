@@ -66,11 +66,14 @@ public class StreamRequestHandler implements WebRequestHandler {
 			}
 		}
 		
+		
 		WebResponse response = null;
 		Stream stream = Stream.open(documentRoot + request.requestURI());
+		Logger.debug(stream, modules);
 		for(Map.Entry<Testable<Stream>, WebRequestHandler> module : modules.entrySet()) {
 			try {
-				module.getKey().test(stream);
+				if(!module.getKey().test(stream))
+					continue;
 			} catch(Throwable t) {
 				Logger.exception(Logger.Level.Gears, t);
 				continue;

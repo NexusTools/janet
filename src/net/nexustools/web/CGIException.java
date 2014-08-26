@@ -18,4 +18,16 @@ public class CGIException extends IOException {
 		super(message, throwable);
 	}
 	
+	public CGIException(Throwable throwable) {
+		super(throwable);
+	}
+
+	public CGIException(String message) {
+		super(message);
+	}
+
+	public CGIException() {
+		super();
+	}
+	
 }

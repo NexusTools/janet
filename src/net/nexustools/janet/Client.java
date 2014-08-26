@@ -220,7 +220,7 @@ public class Client<P extends Packet, S extends Server<P, ?>> {
 		for(final P packet : packets)
 			shutdown.ifRun(new Runnable() {
 				public void run() {
-					packet.failedToSend(Client.this, new DisconnectedException());
+					packet.failedToComplete(Client.this, new DisconnectedException());
 				}
 			}, new Runnable() {
 				public void run() {
@@ -229,7 +229,7 @@ public class Client<P extends Packet, S extends Server<P, ?>> {
 						writePacket(packet);
 						packet.sendComplete(Client.this);
 					} catch (Throwable t) {
-						packet.failedToSend(Client.this, t);
+						packet.failedToComplete(Client.this, t);
 						if(!(t instanceof SocketException))
 							Logger.exception(t);
 					}
@@ -272,7 +272,7 @@ public class Client<P extends Packet, S extends Server<P, ?>> {
 	
 	public void send(final P packet) {
 		if(shutdown.isFinished())
-			packet.failedToSend(Client.this, new DisconnectedException());
+			packet.failedToComplete(Client.this, new DisconnectedException());
 		else
 			try {
 				packetQueue.write(new Writer<ListAccessor<P>>() {

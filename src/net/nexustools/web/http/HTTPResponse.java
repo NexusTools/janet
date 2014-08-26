@@ -8,12 +8,12 @@ package net.nexustools.web.http;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.logging.Level;
 
 import net.nexustools.io.DataOutputStream;
 import net.nexustools.janet.Client;
 import net.nexustools.web.WebHeaders;
 import net.nexustools.web.WebResponse;
-import net.nexustools.web.WebServer;
 import net.nexustools.utils.StringUtils;
 import net.nexustools.utils.log.Logger;
 
@@ -28,11 +28,19 @@ public class HTTPResponse<T, C extends Client, S extends HTTPServer> extends Web
     final InputStream payload;
     final WebHeaders headers;
     
-    public HTTPResponse(int status, String statusString, WebHeaders headers, InputStream payload) {
+    public HTTPResponse(int status, String statusString, WebHeaders headers, final InputStream payload) {
         this.status = status;
         this.statusString = statusString;
         this.payload = payload;
         this.headers = headers;
+		
+		onFinish(new Runnable() {
+			public void run() {
+				try {
+					payload.close();
+				} catch (IOException ex) {}
+			}
+		});
     }
 
     @Override

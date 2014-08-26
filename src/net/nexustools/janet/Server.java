@@ -53,7 +53,9 @@ public class Server<P extends Packet, C extends Client<P, ? extends Server>> ext
 	public static enum Protocol {
 		TCP,
 		SSLvTCP,
-		UDP
+		UDP,
+		
+		Local // Not always implemented
 	}
 	
 	public static ServerSocket spawn(int port, Protocol protocol, Object... args) throws IOException {

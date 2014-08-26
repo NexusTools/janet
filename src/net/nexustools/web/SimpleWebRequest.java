@@ -6,7 +6,6 @@
 
 package net.nexustools.web;
 
-import java.util.Map;
 import net.nexustools.utils.ArgumentMap;
 
 /**

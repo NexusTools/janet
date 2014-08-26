@@ -30,7 +30,7 @@ public abstract class SimplePacketTransport<P extends Packet> implements PacketT
 	}
 
 	public P read(DataInputStream inStream, Client client) throws IOException {
-		P packet = create(0);
+		final P packet = create(0);
 		readPayload(inStream, client, packet);
 		return packet;
 	}

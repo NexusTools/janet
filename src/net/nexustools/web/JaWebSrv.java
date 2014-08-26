@@ -8,13 +8,21 @@ package net.nexustools.web;
 
 import java.io.IOException;
 import net.nexustools.DefaultAppDelegate;
+import net.nexustools.concurrent.Prop;
+import net.nexustools.io.Stream;
 import net.nexustools.janet.Server.Protocol;
-import net.nexustools.web.handlers.CGIRequestHandler;
-import net.nexustools.web.handlers.FileRequestHandler;
-import net.nexustools.web.handlers.MatchRequestHandler;
-import net.nexustools.web.http.HTTPServer;
 import net.nexustools.runtime.RunQueue;
 import net.nexustools.runtime.ThreadedRunQueue;
+import net.nexustools.utils.NXUtils;
+import net.nexustools.utils.Testable;
+import net.nexustools.utils.log.Logger;
+import net.nexustools.web.handlers.FileRequestHandler;
+import net.nexustools.web.handlers.MatchRequestHandler;
+import net.nexustools.web.handlers.PHPRequestHandler;
+import net.nexustools.web.handlers.RedirectRequestHandler;
+import net.nexustools.web.handlers.StreamRequestHandler;
+import net.nexustools.web.handlers.WebRequestHandler;
+import net.nexustools.web.http.HTTPServer;
 
 /**
  *
@@ -31,16 +39,14 @@ public class JaWebSrv extends DefaultAppDelegate {
 
     // while true;do curl -s -w "%{time_total}\n" -o /dev/null 'http://localhost:8080/?key=S0up_!_S0up'; done
     
-	final RunQueue runQueue;
-    final WebServer webServer;
+	final int port;
+	final Protocol protocol;
+	final Prop<Runnable> mainLoop = new Prop();
     public JaWebSrv(String[] args, int port, Protocol protocol, RunQueue runQueue) throws IOException {
         super(args, "JaWebSrv", "NexusTools", runQueue);
-		//MatchRequestHandler matchModule = new MatchRequestHandler(new CGIRequestHandler("/var/www/parked", "index.php", "/usr/bin/php5-cgi"));
 		
-		
-		
-        webServer = new HTTPServer(/*matchModule*/new FileRequestHandler("/"), port, protocol, runQueue);
-		this.runQueue = runQueue;
+		this.protocol = protocol;
+		this.port = port;
     }
     public JaWebSrv(String[] args, int port, Protocol protocol) throws IOException {
 		this(args, port, protocol, new ThreadedRunQueue("JaWebSrv", ThreadedRunQueue.Delegator.Fair, 4f));
@@ -50,7 +56,28 @@ public class JaWebSrv extends DefaultAppDelegate {
     }
 
     @Override
-    protected void launch(String[] args) {}
+    protected void launch(String[] args) {
+		/*MatchRequestHandler matchModule = new MatchRequestHandler(new PHPRequestHandler("/var/www/parked", "index.php"));*/
+		
+		
+		try {
+			final HTTPServer webServer = new HTTPServer(/*matchModule*/new FileRequestHandler("/"), port, protocol, queue());
+			mainLoop.set(new Runnable() {
+				public void run() {
+					while(true)
+						try {
+							webServer.join();
+							break;
+						} catch (InterruptedException ex) {}
+				}
+			});
+		} catch (IOException ex) {
+			mainLoop.set(new Runnable() {
+				public void run() {}
+			});
+			throw NXUtils.wrapRuntime(ex);
+		}
+	}
 
     public boolean needsMainLoop() {
         return false;
@@ -58,9 +85,12 @@ public class JaWebSrv extends DefaultAppDelegate {
 
 	@Override
     public void mainLoop() {
-        try {
-            webServer.join();
-        } catch (InterruptedException ex) {}
+		while(!mainLoop.isTrue())
+			try {
+				Thread.sleep(5000);
+			} catch (InterruptedException ex) {}
+		
+        mainLoop.get().run();
     }
     
 }

@@ -150,7 +150,7 @@ public abstract class RequestPacket<R extends ResponsePacket, C extends Client, 
 	protected void failedToComplete(final C client) {}
 
 	@Override
-	protected void failedToSend(final C client, Throwable reason) {
+	protected void failedToComplete(final C client, Throwable reason) {
 		try {
 			sendRequests.write(new Writer<MapAccessor<Client, ClientRequests>>() {
 				@Override
@@ -166,7 +166,7 @@ public abstract class RequestPacket<R extends ResponsePacket, C extends Client, 
 			throw NXUtils.unwrapRuntime(ex);
 		}
 		failedToComplete(client);
-		super.failedToSend(client, reason);
+		super.failedToComplete(client, reason);
 	}
 
     @Override

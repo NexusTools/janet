@@ -42,7 +42,7 @@ public abstract class Packet<T, C extends Client, S extends Server> {
 	
 	protected void aboutToSend(C client) {}
 	protected void sendComplete(C client) {}
-	protected void failedToSend(C client, Throwable reason) {}
+	protected void failedToComplete(C client, Throwable reason) {}
 	
 	public void read(DataInputStream dataInput, C client) throws UnsupportedOperationException, IOException {
 		try {

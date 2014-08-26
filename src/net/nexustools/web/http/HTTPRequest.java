@@ -8,10 +8,9 @@ package net.nexustools.web.http;
 
 import java.io.BufferedInputStream;
 import java.io.IOException;
-import java.util.EventListener;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.zip.GZIPInputStream;
+import net.nexustools.event.EventDispatcher;
 import net.nexustools.event.ForwardingEventDispatcher;
 import net.nexustools.io.DataInputStream;
 import net.nexustools.io.InputLineReader;
@@ -159,7 +158,18 @@ public class HTTPRequest<T, C extends Client, S extends HTTPServer> extends WebR
 
 	@Override
 	public void addConnectionListener(ConnectionClosedListener listener) {
-		
+		connectionDispatcher.add(listener);
+	}
+	
+	<S> void notifyClosed(final S source) {
+		connectionDispatcher.dispatch(new EventDispatcher.Processor<ConnectionClosedListener, ConnectionClosedEvent>() {
+			public ConnectionClosedEvent create() {
+				return new ConnectionClosedEvent(source);
+			}
+			public void dispatch(ConnectionClosedListener listener, ConnectionClosedEvent event) {
+				listener.connectionClosed(event);
+			}
+		});
 	}
     
 }
