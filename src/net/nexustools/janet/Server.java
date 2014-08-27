@@ -148,7 +148,7 @@ public class Server<P extends Packet, C extends Client<P, ? extends Server>> ext
 				}
 			});
 		} catch (InvocationTargetException ex) {
-			throw NXUtils.unwrapRuntime(ex);
+			throw NXUtils.wrapRuntime(ex);
 		}
 	}
 	public void sendAll(P packet) {

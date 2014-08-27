@@ -283,7 +283,7 @@ public class Client<P extends Packet, S extends Server<P, ?>> {
 					}
 				});
 			} catch (InvocationTargetException ex) {
-				throw NXUtils.unwrapRuntime(ex);
+				throw NXUtils.wrapRuntime(ex);
 			}
 	}
 

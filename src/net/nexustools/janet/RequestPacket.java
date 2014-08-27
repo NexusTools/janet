@@ -72,7 +72,7 @@ public abstract class RequestPacket<R extends ResponsePacket, C extends Client, 
 					}
 				});
 			} catch (InvocationTargetException ex) {
-				throw NXUtils.unwrapRuntime(ex);
+				throw NXUtils.wrapRuntime(ex);
 			}
 		}
 		
@@ -104,7 +104,7 @@ public abstract class RequestPacket<R extends ResponsePacket, C extends Client, 
 			}))
 				throw new RuntimeException("No such request was made: " + refStr(id));
 		} catch (InvocationTargetException ex) {
-			throw NXUtils.unwrapRuntime(ex);
+			throw NXUtils.wrapRuntime(ex);
 		}
 	}
 
@@ -121,7 +121,7 @@ public abstract class RequestPacket<R extends ResponsePacket, C extends Client, 
 				}
 			});
 		} catch (InvocationTargetException ex) {
-			throw NXUtils.unwrapRuntime(ex);
+			throw NXUtils.wrapRuntime(ex);
 		}
         if (request == null)
             throw new RuntimeException("No such request was made: " + refStr(id));
@@ -142,7 +142,7 @@ public abstract class RequestPacket<R extends ResponsePacket, C extends Client, 
 				}
 			});
 		} catch (InvocationTargetException ex) {
-			throw NXUtils.unwrapRuntime(ex);
+			throw NXUtils.wrapRuntime(ex);
 		}
 		super.aboutToSend(client);
 	}
@@ -163,7 +163,7 @@ public abstract class RequestPacket<R extends ResponsePacket, C extends Client, 
 				}
 			});
 		} catch (InvocationTargetException ex) {
-			throw NXUtils.unwrapRuntime(ex);
+			throw NXUtils.wrapRuntime(ex);
 		}
 		failedToComplete(client);
 		super.failedToComplete(client, reason);

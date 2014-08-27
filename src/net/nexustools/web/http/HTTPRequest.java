@@ -155,21 +155,5 @@ public class HTTPRequest<T, C extends Client, S extends HTTPServer> extends WebR
 			
 		throw new UnsupportedOperationException();
 	}
-
-	@Override
-	public void addConnectionListener(ConnectionClosedListener listener) {
-		connectionDispatcher.add(listener);
-	}
-	
-	<S> void notifyClosed(final S source) {
-		connectionDispatcher.dispatch(new EventDispatcher.Processor<ConnectionClosedListener, ConnectionClosedEvent>() {
-			public ConnectionClosedEvent create() {
-				return new ConnectionClosedEvent(source);
-			}
-			public void dispatch(ConnectionClosedListener listener, ConnectionClosedEvent event) {
-				listener.connectionClosed(event);
-			}
-		});
-	}
     
 }

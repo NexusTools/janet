@@ -12,6 +12,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Level;
 import net.nexustools.io.EfficientInputStream;
 import net.nexustools.web.CGIException;
 import net.nexustools.web.ConnectionClosedListener;
@@ -97,18 +98,17 @@ public class CGIRequestHandler implements WebRequestHandler {
 			Logger.debug("Launching CGI", env);
 			final Process proc = builder.start();
 			final InputStream cgiStream = new BufferedInputStream(proc.getInputStream());
-			request.addConnectionListener(new ConnectionClosedListener() {
-				@Override
-				public void connectionClosed(ConnectionClosedListener.ConnectionClosedEvent event) {
+			request.onFinish(new Runnable() {
+				public void run() {
 					try {
-					proc.exitValue();
+						proc.exitValue();
 					} catch(IllegalThreadStateException ex) {
 						Logger.warn("Client disconnected before cgi script finished, ending process.");
 						proc.destroy();
-						try {
-							cgiStream.close();
-						} catch (IOException e) {}
 					}
+					try {
+						cgiStream.close();
+					} catch (Throwable ex) {}
 				}
 			});
 			Logger.debug("Waiting on CGI Completion");

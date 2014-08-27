@@ -20,6 +20,7 @@ import java.io.IOException;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
+import net.nexustools.data.buffer.basic.StrongTypeList;
 import net.nexustools.io.DataInputStream;
 import net.nexustools.io.DataOutputStream;
 import net.nexustools.utils.Pair;
@@ -56,13 +57,13 @@ public class DefaultPacketTransport<P extends Packet> implements PacketTransport
 	}
 	
 	Type packetIDType;
-	ArrayList<Entry> entryList = new ArrayList();
+	StrongTypeList<Entry> entryList = new StrongTypeList();
 	Entry[] registered;
 	
 	public void register(Class<? extends P> packetClass) throws NoSuchMethodException {
-		if(entryList.size() >= 0xFFFF)
+		if(entryList.length() >= 0xFFFF)
 			throw new RuntimeException("There is a limit of 0xFFFF packet types, to add more make SubPackets or override the nextPacket method with your own implementation.");
-		entryList.add(new Entry(packetClass.getConstructor(), packetClass));
+		entryList.push(new Entry(packetClass.getConstructor(), packetClass));
 	}
 	
 	public int idFor(P packet) throws NoSuchMethodException {
@@ -177,7 +178,7 @@ public class DefaultPacketTransport<P extends Packet> implements PacketTransport
 	}
 	
 	public void lock() {
-		registered = entryList.toArray(new Entry[entryList.size()]);
+		registered = entryList.toArray();
 		entryList = null;
 		
 		if(registered.length > 0xFFFF)

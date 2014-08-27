@@ -76,7 +76,7 @@ public abstract class Packet<T, C extends Client, S extends Server> {
 				}
 			});
 		} catch (InvocationTargetException ex) {
-			throw NXUtils.unwrapRuntime(ex);
+			throw NXUtils.wrapRuntime(ex);
 		}
 	}
 	

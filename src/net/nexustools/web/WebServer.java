@@ -14,9 +14,7 @@ import java.util.Date;
 import net.nexustools.Application;
 import net.nexustools.concurrent.Prop;
 import net.nexustools.data.buffer.basic.StringList;
-import net.nexustools.io.EfficientInputStream;
 import net.nexustools.io.Stream;
-import net.nexustools.io.StreamUtils;
 import net.nexustools.janet.Client;
 import net.nexustools.janet.PacketTransport;
 import net.nexustools.janet.Server;
@@ -26,6 +24,7 @@ import net.nexustools.utils.Pair;
 import net.nexustools.utils.StringUtils;
 import net.nexustools.utils.log.Logger;
 import net.nexustools.web.handlers.WebRequestHandler;
+import net.nexustools.web.io.ChunkedEncodingInputStream;
 
 /**
  *
@@ -160,7 +159,7 @@ public abstract class WebServer<P extends WebPacket, C extends Client<P, ? exten
 			boolean preview = false;
 			String mimeType = null;
 			try {
-				if(childStream.hasChildren()) {
+				if(childStream.isDirectory()) {
 					mimeType = "inode/directory";
 					type = "folder";
 				} else {
@@ -345,8 +344,6 @@ public abstract class WebServer<P extends WebPacket, C extends Client<P, ? exten
 	public final WebResponse createResponse(int code, String mimeType, InputStream payload, WebRequest request, Pair<String,String>... extraHeaders) {
 		return createResponse(code, summaryForCode(code), mimeType, -1, payload, request, extraHeaders);
 	}
-	public final static byte[] LR = "\r\n".getBytes(StringUtils.UTF8);
-	public final static byte[] ChunkEnd = "0\r\n\r\n".getBytes(StringUtils.UTF8);
 	public final WebResponse createResponse(int code, String codeMessage, String mimeType, final long size, InputStream payload, WebRequest request, Pair<String,String>... extraHeaders) {
 		WebHeaders headers = new WebHeaders();
 		for(Pair<String, String> extra : extraHeaders)
@@ -455,38 +452,8 @@ public abstract class WebServer<P extends WebPacket, C extends Client<P, ? exten
 			if(Integer.valueOf(headers.get("Content-Length", "0")) <= 0 && !headers.has("Transfer-Encoding")) {
 				headers.set("Transfer-Encoding", "chunked");
 				headers.set("Connection", "keep-alive");
-				final InputStream iStream = payload;
-				payload = new EfficientInputStream() {
-					byte[] tempBuffer = new byte[StreamUtils.DefaultMaxCopySize];
-					boolean endOfStream = false;
-					@Override
-					public int read(byte[] b, int off, int len) throws IOException {
-						if(endOfStream)
-							return -1;
-						
-						int read = Math.min(tempBuffer.length, len-20);
-						read = iStream.read(tempBuffer, 0, read);
-						if(read < 1) {
-							if(read < 0) {
-								System.arraycopy(ChunkEnd, 0, b, off, ChunkEnd.length);
-								endOfStream = true;
-								return ChunkEnd.length;
-							}
-							return read;
-						}
-						
-						byte[] chunkBytes = (Integer.toHexString(read) + "\r\n").getBytes(StringUtils.UTF8);
-						System.arraycopy(chunkBytes, 0, b, off, chunkBytes.length);
-						System.arraycopy(tempBuffer, 0, b, off+chunkBytes.length, read);
-						System.arraycopy(LR, 0, b, off+chunkBytes.length+read, LR.length);
-						return read + chunkBytes.length + LR.length;
-					}
-					@Override
-					public void close() throws IOException {
-						iStream.close();
-						super.close();
-					}
-				};
+				
+				payload = new ChunkedEncodingInputStream(payload);
 			}
 		}
 		

@@ -10,7 +10,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Method;
 import java.net.URISyntaxException;
-import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import net.nexustools.io.Stream;
@@ -18,7 +17,6 @@ import net.nexustools.web.WebRequest;
 import net.nexustools.web.WebResponse;
 import net.nexustools.web.WebServer;
 import static net.nexustools.web.WebServer.dateFormat;
-import net.nexustools.utils.ArgumentMap;
 import net.nexustools.utils.Pair;
 import net.nexustools.utils.Testable;
 import net.nexustools.utils.log.Logger;
@@ -108,7 +106,7 @@ public class StreamRequestHandler implements WebRequestHandler {
 			return server.standardResponse(403, request);
 		
 		if(stream.exists()) {
-			if(stream.hasChildren()) {
+			if(stream.isDirectory()) {
 				String path = request.path();
 				if(!path.endsWith("/"))
 					path += "/";
@@ -137,7 +135,7 @@ public class StreamRequestHandler implements WebRequestHandler {
 						}, request);
 				} catch(Throwable t) {}
 				
-				final ArgumentMap args = request.arguments(WebRequest.Scope.GET);
+//				final ArgumentMap args = request.arguments(WebRequest.Scope.GET);
 //				if(args.containsKey("thumb") && mimeType.startsWith("image/")) {
 //					Image image = ImageIO.read(stream.createInputStream());
 //					Pair<Float, Float> realSize = new Pair((float)image.getWidth(null), (float)image.getHeight(null));

@@ -8,7 +8,6 @@ package net.nexustools.web.http;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.logging.Level;
 
 import net.nexustools.io.DataOutputStream;
 import net.nexustools.janet.Client;
@@ -28,7 +27,8 @@ public class HTTPResponse<T, C extends Client, S extends HTTPServer> extends Web
     final InputStream payload;
     final WebHeaders headers;
     
-    public HTTPResponse(int status, String statusString, WebHeaders headers, final InputStream payload) {
+    public HTTPResponse(int status, String statusString, WebHeaders headers, final InputStream payload, Runnable... finishers) {
+		super(finishers);
         this.status = status;
         this.statusString = statusString;
         this.payload = payload;

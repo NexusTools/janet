@@ -11,8 +11,11 @@ import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import net.nexustools.data.buffer.basic.StringList;
+import net.nexustools.data.buffer.basic.StrongTypeList;
 import net.nexustools.janet.Client;
 import net.nexustools.utils.ArgumentMap;
+import net.nexustools.utils.Pair;
 import net.nexustools.utils.log.Logger;
 
 /**
@@ -29,6 +32,24 @@ public abstract class WebRequest<T, C extends Client, S extends WebServer> exten
 		GET_POST,
 		ALL
 	}
+	
+	protected final StrongTypeList<Runnable> finishers = new StrongTypeList();
+	
+	public void onFinish(Runnable... finisher) {
+		finishers.pushAll(finisher);
+	}
+	
+	public void notifyFinished() {
+		for(Runnable finisher : finishers.take())
+			finisher.run();
+	}
+
+	@Override
+	protected void finalize() throws Throwable {
+		super.finalize();
+		if(finishers.length() > 0)
+			notifyFinished();
+	}
     
     public abstract String requestURI();
     public abstract String method();
@@ -38,24 +59,20 @@ public abstract class WebRequest<T, C extends Client, S extends WebServer> exten
     public abstract ArgumentMap arguments(Scope scope);
 	public abstract boolean acceptsEncoding(String encoding);
 	
-	public abstract void addConnectionListener(ConnectionClosedListener listener);
-	
 	public String requestString(Scope scope) {
 		ArgumentMap map = arguments(scope);
 		StringBuilder builder = new StringBuilder();
 		
 		boolean addAnd = false;
-		for(Map.Entry<String, ArrayList<String>> entry : map.entrySet()) {
-			
-			List<String> values = entry.getValue();
-			if(values.size() > 0)
-				for(String value : values) {
+		for(Pair<String, StringList> entry : map) {
+			if(entry.v.length() > 0)
+				for(String value : entry.v) {
 					if(addAnd)
 						builder.append('&');
 					else
 						addAnd = true;
 					try {
-						builder.append(URLEncoder.encode(entry.getKey(), "UTF-8"));
+						builder.append(URLEncoder.encode(entry.i, "UTF-8"));
 						builder.append('=');
 						builder.append(URLEncoder.encode(value, "UTF-8"));
 					} catch (UnsupportedEncodingException ex) {
@@ -69,7 +86,7 @@ public abstract class WebRequest<T, C extends Client, S extends WebServer> exten
 					addAnd = true;
 				
 				try {
-					builder.append(URLEncoder.encode(entry.getKey(), "UTF-8"));
+					builder.append(URLEncoder.encode(entry.i, "UTF-8"));
 				} catch (UnsupportedEncodingException ex) {
 					throw new RuntimeException(ex);
 				}

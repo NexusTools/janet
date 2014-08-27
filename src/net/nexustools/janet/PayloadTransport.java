@@ -28,10 +28,7 @@ public class PayloadTransport extends DefaultPacketTransport {
 
 	@Override
 	public void readPayload(DataInputStream inStream, Client client, Packet packet) throws UnsupportedOperationException, IOException {
-		byte[] data = new byte[inStream.readShort()];
-		inStream.readFully(data);
-		
-		super.readPayload(new DataInputStream(new ByteArrayInputStream(data)), client, packet);
+		super.readPayload(new MemoryStream(inStream, inStream.readShort()).createDataInputStream(), client, packet);
 	}
 	
 }

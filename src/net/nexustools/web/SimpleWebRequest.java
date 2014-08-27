@@ -58,10 +58,5 @@ public class SimpleWebRequest extends WebRequest {
 	public boolean acceptsEncoding(String encoding) {
 		return false;
 	}
-
-	@Override
-	public void addConnectionListener(ConnectionClosedListener listener) {
-		throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-	}
 	
 }

@@ -16,7 +16,11 @@ import net.nexustools.utils.log.Logger;
  */
 public abstract class WebResponse<T, C extends Client, S extends WebServer> extends WebPacket<T, C, S> {
 	
-	StrongTypeList<Runnable> finishers = new StrongTypeList();
+	final StrongTypeList<Runnable> finishers;
+	public WebResponse(Runnable... finishers) {
+		this.finishers = new StrongTypeList<Runnable>(finishers);
+	}
+	
 	public void onFinish(Runnable... finisher) {
 		finishers.pushAll(finisher);
 	}

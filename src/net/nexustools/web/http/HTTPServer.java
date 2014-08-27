@@ -43,8 +43,12 @@ public class HTTPServer<P extends WebPacket, C extends Client<P, ? extends HTTPS
     }
 
 	@Override
-	protected WebResponse createResponseImpl(int code, String codeMessage, WebHeaders headers, InputStream payload, WebRequest request) {
-		return new HTTPResponse(code, codeMessage, headers, payload);
+	protected WebResponse createResponseImpl(int code, String codeMessage, WebHeaders headers, InputStream payload, final WebRequest request) {
+		return new HTTPResponse(code, codeMessage, headers, payload, new Runnable() {
+			public void run() {
+				request.notifyFinished();
+			}
+		});
 	}
     
 }
