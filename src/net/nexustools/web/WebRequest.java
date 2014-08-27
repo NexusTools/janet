@@ -43,13 +43,6 @@ public abstract class WebRequest<T, C extends Client, S extends WebServer> exten
 		for(Runnable finisher : finishers.take())
 			finisher.run();
 	}
-
-	@Override
-	protected void finalize() throws Throwable {
-		super.finalize();
-		if(finishers.length() > 0)
-			notifyFinished();
-	}
     
     public abstract String requestURI();
     public abstract String method();

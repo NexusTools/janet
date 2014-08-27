@@ -20,7 +20,7 @@ import net.nexustools.web.WebServer;
 public class FastCGIRequestHandler implements WebRequestHandler {
 
 	static boolean testConnection(String string) {
-		return new File(string).canWrite();
+		return false && new File(string).canWrite();
 	}
 	
 	private final String cgiScript;

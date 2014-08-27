@@ -10,16 +10,15 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Method;
 import java.net.URISyntaxException;
-import java.util.LinkedHashMap;
-import java.util.Map;
+import net.nexustools.data.buffer.basic.StrongTypeMap;
 import net.nexustools.io.Stream;
+import net.nexustools.utils.Pair;
+import net.nexustools.utils.Testable;
+import net.nexustools.utils.log.Logger;
 import net.nexustools.web.WebRequest;
 import net.nexustools.web.WebResponse;
 import net.nexustools.web.WebServer;
 import static net.nexustools.web.WebServer.dateFormat;
-import net.nexustools.utils.Pair;
-import net.nexustools.utils.Testable;
-import net.nexustools.utils.log.Logger;
 
 /**
  *
@@ -27,12 +26,12 @@ import net.nexustools.utils.log.Logger;
  */
 public class StreamRequestHandler implements WebRequestHandler {
     
-	private final String authGET;
-    private final String documentRoot;
-	private final LinkedHashMap<Testable<Stream>, WebRequestHandler> modules = new LinkedHashMap();
+	protected final String authGET;
+    protected final String documentRoot;
+	private final StrongTypeMap<Testable<Stream>, WebRequestHandler> modules = new StrongTypeMap();
     public StreamRequestHandler(String root, String authGET) {
-		if(root.endsWith("/"))
-			root = root.substring(0, root.length()-1);
+		if(!root.endsWith("/"))
+			root += "/";
 		this.authGET = authGET;
         documentRoot = root;
     }
@@ -66,18 +65,21 @@ public class StreamRequestHandler implements WebRequestHandler {
 		
 		
 		WebResponse response = null;
-		Stream stream = Stream.open(documentRoot + request.requestURI());
+		Stream stream = Stream.open(documentRoot + request.requestURI().substring(1));
+		if(stream.isDirectory() && !request.path().endsWith("/"))
+			return RedirectRequestHandler.createResponse(request.path() + "/", server, request);
+		
 		Logger.debug(stream, modules);
-		for(Map.Entry<Testable<Stream>, WebRequestHandler> module : modules.entrySet()) {
+		for(Pair<Testable<Stream>, WebRequestHandler> module : modules) {
 			try {
-				if(!module.getKey().test(stream))
+				if(!module.i.test(stream))
 					continue;
 			} catch(Throwable t) {
 				Logger.exception(Logger.Level.Gears, t);
 				continue;
 			}
 			try {
-				response = module.getValue().handle(server, request);
+				response = module.v.handle(server, request);
 			} catch(Throwable t) {
 				Logger.exception(Logger.Level.Warning, t);
 				response = server.exceptionResponse(t, request);
@@ -92,10 +94,8 @@ public class StreamRequestHandler implements WebRequestHandler {
 
 	@Override
 	public String toString() {
-		return getClass().getSimpleName() + "{root=" + documentRoot + "}";
+		return getClass().getSimpleName() + "{root=" + documentRoot + ",modules=" + modules + "}";
 	}
-	
-	
 	
 	public static final WebResponse createResponse(Stream stream, WebServer server, WebRequest request) throws IOException {
 		return createResponse(stream, server, request, null);

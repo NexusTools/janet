@@ -67,7 +67,6 @@ public class HTTPResponse<T, C extends Client, S extends HTTPServer> extends Web
         byte[] buffer = new byte[1024 * 1024 * 4]; // 4MB Buffer
         while((read = payload.read(buffer)) > 0)
             dataOutput.write(buffer, 0, read);
-        payload.close();
 
 		//if(close)
 			dataOutput.close();

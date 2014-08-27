@@ -13,7 +13,13 @@ import net.nexustools.janet.Server.Protocol;
 import net.nexustools.runtime.RunQueue;
 import net.nexustools.runtime.ThreadedRunQueue;
 import net.nexustools.utils.NXUtils;
+import net.nexustools.utils.Testable;
 import net.nexustools.web.handlers.FileRequestHandler;
+import net.nexustools.web.handlers.JoomlaRequestHandler;
+import net.nexustools.web.handlers.MatchRequestHandler;
+import net.nexustools.web.handlers.PHPFileRequestHandler;
+import net.nexustools.web.handlers.PHPRequestHandler;
+import net.nexustools.web.handlers.RedirectRequestHandler;
 import net.nexustools.web.http.HTTPServer;
 
 /**
@@ -49,10 +55,10 @@ public class JaWebSrv extends DefaultAppDelegate {
 
     @Override
     protected void launch(String[] args) {
-		/*MatchRequestHandler matchModule = new MatchRequestHandler(new PHPRequestHandler("/var/www/parked", "index.php"));*/
+		MatchRequestHandler matchModule = new MatchRequestHandler(new PHPRequestHandler("/var/www/parked", "index.php"));
 		
 		try {
-			final HTTPServer webServer = new HTTPServer(/*matchModule*/new FileRequestHandler("/"), port, protocol, queue());
+			final HTTPServer webServer = new HTTPServer(matchModule/*new FileRequestHandler("/")*/, port, protocol, queue());
 			mainLoop.set(new Runnable() {
 				public void run() {
 					while(true)

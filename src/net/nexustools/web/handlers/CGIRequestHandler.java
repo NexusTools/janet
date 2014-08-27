@@ -14,14 +14,16 @@ import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
 import net.nexustools.io.EfficientInputStream;
+import net.nexustools.io.FileStream;
+import net.nexustools.io.Stream;
+import net.nexustools.utils.Pair;
+import net.nexustools.utils.log.Logger;
 import net.nexustools.web.CGIException;
 import net.nexustools.web.ConnectionClosedListener;
 import net.nexustools.web.WebRequest;
 import net.nexustools.web.WebResponse;
 import net.nexustools.web.WebServer;
 import net.nexustools.web.http.HTTPHeaders;
-import net.nexustools.utils.Pair;
-import net.nexustools.utils.log.Logger;
 
 /**
  *
@@ -43,6 +45,11 @@ public class CGIRequestHandler implements WebRequestHandler {
 	}
 	
 	public static WebResponse createResponse(String documentRoot, String cgiScript, String cgiProcess, WebServer server, WebRequest request) throws IOException {
+		Stream stream = Stream.open(documentRoot).effectiveStream();
+		if(!(stream instanceof FileStream))
+			throw new UnsupportedOperationException(stream + " is not an applicable document root.");
+		
+		documentRoot = stream.path();
 		if(!documentRoot.endsWith("/"))
 			documentRoot += '/';
 		if(cgiScript.startsWith("/"))

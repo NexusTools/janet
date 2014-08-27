@@ -33,7 +33,7 @@ public class RedirectRequestHandler implements WebRequestHandler {
 		return server.createResponse(perminent ? 301 : 302, builder.toString(), false, request, new Pair<String, String>("Location", location));
 	}
 
-	public static WebResponse redirectResponse(String location, WebServer server, WebRequest request) {
+	public static WebResponse createResponse(String location, WebServer server, WebRequest request) {
 		return createResponse(location, false, server, request);
 	}
 	
