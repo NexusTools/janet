@@ -6,20 +6,21 @@
 
 package net.nexustools.web;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
+import net.nexustools.data.annote.ThreadUnsafe;
+import net.nexustools.data.buffer.basic.StringList;
 import net.nexustools.utils.Pair;
 
 /**
  *
  * @author katelyn
  */
-public class WebHeaders implements Iterable<Pair<String, List<String>>> {
+@ThreadUnsafe
+public class WebHeaders implements Iterable<Pair<String, StringList>> {
 	
-	protected final HashMap<String, List<String>> headers = new HashMap();
+	protected final HashMap<String, StringList> headers = new HashMap();
 	
 	public String get(String key) {
 		try {
@@ -47,38 +48,39 @@ public class WebHeaders implements Iterable<Pair<String, List<String>>> {
 			return null;
 		}
 	}
-	public List<String> takes(String key) {
-		return headers.remove(key.toLowerCase());
+	public StringList takes(String key) {
+		return headers.remove(key);
 	}
-	public List<String> gets(String key) {
+	public StringList gets(String key) {
 		return headers.get(key.toLowerCase());
 	}
 	public boolean has(String key) {
 		return headers.containsKey(key.toLowerCase());
 	}
 	public void add(String key, String val) {
-		List<String> list = headers.get(key.toLowerCase());
+		StringList list = headers.get(key.toLowerCase());
 		if(list == null)
-			headers.put(key.toLowerCase(), list = new ArrayList());
-		list.add(val);
+			headers.put(key.toLowerCase(), list = new StringList());
+		list.push(val);
 	}
 	public void set(String key, String val) {
-		List<String> list = headers.get(key.toLowerCase());
+		StringList list = headers.get(key.toLowerCase());
 		if(list == null)
-			headers.put(key.toLowerCase(), list = new ArrayList());
-		else
+			headers.put(key.toLowerCase(), new StringList(val));
+		else {
 			list.clear();
-		list.add(val);
+			list.push(val);
+		}
 	}
 
-	public Iterator<Pair<String, List<String>>> iterator() {
-		return new Iterator<Pair<String, List<String>>>() {
-			Iterator<Map.Entry<String, List<String>>> it = headers.entrySet().iterator();
+	public Iterator<Pair<String, StringList>> iterator() {
+		return new Iterator<Pair<String, StringList>>() {
+			Iterator<Map.Entry<String, StringList>> it = headers.entrySet().iterator();
 			public boolean hasNext() {
 				return it.hasNext();
 			}
-			public Pair<String, List<String>> next() {
-				Map.Entry<String, List<String>> entry = it.next();
+			public Pair<String, StringList> next() {
+				Map.Entry<String, StringList> entry = it.next();
 				return new Pair(entry.getKey(), entry.getValue());
 			}
 			public void remove() {
@@ -90,6 +92,10 @@ public class WebHeaders implements Iterable<Pair<String, List<String>>> {
 	@Override
 	public String toString() {
 		return headers.toString();
+	}
+
+	public void remove(String key) {
+		headers.remove(key);
 	}
 	
 }

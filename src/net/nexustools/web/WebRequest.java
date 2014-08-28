@@ -8,11 +8,10 @@ package net.nexustools.web;
 
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
 import net.nexustools.data.buffer.basic.StringList;
 import net.nexustools.data.buffer.basic.StrongTypeList;
+import net.nexustools.io.Stream;
+import net.nexustools.io.TemporaryFileStream;
 import net.nexustools.janet.Client;
 import net.nexustools.utils.ArgumentMap;
 import net.nexustools.utils.Pair;
@@ -47,10 +46,15 @@ public abstract class WebRequest<T, C extends Client, S extends WebServer> exten
     public abstract String requestURI();
     public abstract String method();
     public abstract String path();
+	
+	public abstract long payloadLength();
+	public abstract String payloadType();
+	public abstract Stream payload();
     
 	public abstract WebHeaders headers();
     public abstract ArgumentMap arguments(Scope scope);
 	public abstract boolean acceptsEncoding(String encoding);
+    public abstract Stream payloadFile(String name);
 	
 	public String requestString(Scope scope) {
 		ArgumentMap map = arguments(scope);

@@ -10,20 +10,21 @@ import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.List;
+import java.io.OutputStream;
 import java.util.Map;
-import java.util.logging.Level;
-import net.nexustools.io.EfficientInputStream;
+import net.nexustools.data.buffer.basic.StringList;
 import net.nexustools.io.FileStream;
 import net.nexustools.io.Stream;
+import net.nexustools.io.StreamUtils;
 import net.nexustools.utils.Pair;
+import net.nexustools.utils.StringUtils;
 import net.nexustools.utils.log.Logger;
 import net.nexustools.web.CGIException;
-import net.nexustools.web.ConnectionClosedListener;
 import net.nexustools.web.WebRequest;
 import net.nexustools.web.WebResponse;
 import net.nexustools.web.WebServer;
 import net.nexustools.web.http.HTTPHeaders;
+import net.nexustools.web.io.ChunkedEncodingInputStream;
 
 /**
  *
@@ -81,8 +82,8 @@ public class CGIRequestHandler implements WebRequestHandler {
 			env.clear();
 			
 			env.put("DOCUMENT_ROOT", documentRoot);
-			for(Pair<String, List<String>> header : request.headers()) {
-				if(header.v.size() == 1)
+			for(Pair<String, StringList> header : request.headers()) {
+				if(header.v.length() == 1)
 					env.put("HTTP_" + (header.i.toUpperCase().replace('-', '_')), header.v.get(0));
 			}
 			//env.add("HTTPS=on");
@@ -101,6 +102,12 @@ public class CGIRequestHandler implements WebRequestHandler {
 			env.put("SERVER_NAME", server.serverName());
 			env.put("SERVER_PORT", "8080");
 			env.put("SERVER_SOFTWARE", "JaNET");
+			
+			long payloadLength = request.payloadLength();
+			if(payloadLength > 0) {
+				env.put("CONTENT_LENGTH", String.valueOf(payloadLength));
+				env.put("CONTENT_TYPE", String.valueOf(request.payloadType()));
+			}
 
 			Logger.debug("Launching CGI", env);
 			final Process proc = builder.start();
@@ -110,16 +117,21 @@ public class CGIRequestHandler implements WebRequestHandler {
 					try {
 						proc.exitValue();
 					} catch(IllegalThreadStateException ex) {
-						Logger.warn("Client disconnected before cgi script finished, ending process.");
+						Logger.warn("Packet ended before cgi script finished, ending process.");
 						proc.destroy();
 					}
-					try {
-						cgiStream.close();
-					} catch (Throwable ex) {}
 				}
 			});
-			Logger.debug("Waiting on CGI Completion");
-
+			OutputStream procOut = proc.getOutputStream();
+			if(payloadLength > 0) {
+				InputStream payloadIn = request.payload().createInputStream();
+				Logger.debug("Passing Payload to CGI", StringUtils.stringForSize(payloadLength));
+				StreamUtils.copy(payloadIn, procOut, payloadLength);
+				payloadIn.close();
+			}
+			procOut.close();
+			
+			Logger.debug("Reading CGI Headers");
 			HTTPHeaders headers = new HTTPHeaders();
 			try {
 				headers.parse(cgiStream);
@@ -141,30 +153,8 @@ public class CGIRequestHandler implements WebRequestHandler {
 				}
 			}
 
-			Logger.debug(headers);
-			return server.createRawResponse(status, statusMessage, headers, new EfficientInputStream() {
-				boolean allowDeath = false;
-				@Override
-				public int read(byte[] b, int off, int len) throws IOException {
-					int read;
-					while((read = cgiStream.read(b, off, len)) < 1) {
-						try {
-							if(!allowDeath) {
-								allowDeath = true;
-								Logger.debug("CGI Exited with Status", proc.exitValue());
-								throw new IllegalThreadStateException();
-							} else
-								break;
-						} catch(IllegalThreadStateException stillRunning) {
-							try {
-								Thread.sleep(20);
-							} catch (InterruptedException ex) {}
-						}
-					}
-					Logger.debug("Read CGI Data", read);
-					return read;
-				}
-			}, request);
+			Logger.debug("Passing CGI STDOUT");
+			return server.createRawResponse(status, statusMessage, headers, cgiStream, request);
 		} catch(CGIException cgi) {
 			throw cgi;
 		} catch(Throwable t) {

@@ -36,6 +36,8 @@ public abstract class WebResponse<T, C extends Client, S extends WebServer> exte
 		finish();
 	}
 	protected void finish() {
+		Logger.debug("Running Finishers", this);
+		
 		for(Runnable finisher : finishers.take())
 			try {
 				finisher.run();

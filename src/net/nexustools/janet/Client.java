@@ -15,17 +15,18 @@
 
 package net.nexustools.janet;
 
+import java.io.Closeable;
+import java.io.EOFException;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.net.Socket;
 import java.net.SocketException;
-import java.util.List;
 import net.nexustools.concurrent.Condition;
 import net.nexustools.concurrent.DefaultPropMap;
-import net.nexustools.data.accessor.ListAccessor;
 import net.nexustools.concurrent.Prop;
 import net.nexustools.concurrent.PropList;
 import net.nexustools.concurrent.logic.Writer;
+import net.nexustools.data.accessor.ListAccessor;
 import net.nexustools.event.DefaultEventDispatcher;
 import net.nexustools.event.EventDispatcher;
 import net.nexustools.io.DataInputStream;
@@ -54,6 +55,7 @@ public class Client<P extends Packet, S extends Server<P, ?>> {
 	});
 	
 	static final ThreadLocal<Client> currentClient = new ThreadLocal();
+
 	private abstract class ReceiveThread extends Thread {
 		public ReceiveThread(String name) {
 			super(name + "In");
@@ -68,12 +70,12 @@ public class Client<P extends Packet, S extends Server<P, ?>> {
 				while(true) {
 					final P packet = nextPacket();
 					if(packet == null)
-						throw new IOException("Unexpected end of stream");
+						throw new EOFException();
 
 					Logger.gears("Received Packet", packet);
 					runQueue.push(packetProcessor(packet));
 				}
-			} catch (DisconnectedException ex) {
+			} catch (EOFException ex) {
 				Logger.exception(Logger.Level.Gears, ex);
 			} catch (SocketException ex) {
 				Logger.exception(Logger.Level.Gears, ex);
@@ -83,7 +85,7 @@ public class Client<P extends Packet, S extends Server<P, ?>> {
 				isAlive.set(false);
 				Logger.debug("Client Disconnected", Client.this);
 				try {
-					socket.i.close();
+					socketImpl.close();
 				} catch (IOException ex) {}
 
 				shutdown.finish(new Runnable() {
@@ -114,7 +116,9 @@ public class Client<P extends Packet, S extends Server<P, ?>> {
 		throw new UnsupportedOperationException();
 	}
 	
+	protected boolean killAfter;
 	protected final RunQueue runQueue;
+	protected final Closeable socketImpl;
 	final PacketTransport<P> packetRegistry;
 	final Condition shutdown = new Condition();
 	final Prop<Boolean> isAlive = new Prop(true);
@@ -149,6 +153,12 @@ public class Client<P extends Packet, S extends Server<P, ?>> {
 		processSendQueue = new FairRunnable() {
 			public void run() {
 				writeQueue();
+				if(killAfter) {
+					writeQueue();
+					try {
+						socket.close();
+					} catch (IOException ex) {}
+				}
 			}
 			public int fairHashCode() {
 				return clientHash;
@@ -157,11 +167,24 @@ public class Client<P extends Packet, S extends Server<P, ?>> {
 		
 		eventDispatcher = new DefaultEventDispatcher(server.runQueue);
 		packetDispatcher = new DefaultEventDispatcher(server.runQueue);
-		this.socket = new Pair(new DataInputStream(socket.getInputStream()), new DataOutputStream(socket.getOutputStream()));
+		this.socket = new Pair(new DataInputStream(socket.getInputStream()) {
+			@Override
+			public void close() throws IOException {
+				super.close();
+				socketImpl.close();
+			}
+		}, new DataOutputStream(socket.getOutputStream()) {
+			@Override
+			public void close() throws IOException {
+				super.close();
+				socketImpl.close();
+			}
+		});
 		this.packetRegistry = server.packetRegistry;
 		this.runQueue = server.runQueue;
 		this.server = server;
 		
+		socketImpl = socket;
 		receiveThread.start();
 	}
 	public Client(final Socket socket, RunQueue runQueue, PacketTransport packetRegistry) throws IOException {
@@ -187,6 +210,12 @@ public class Client<P extends Packet, S extends Server<P, ?>> {
 		processSendQueue = new FairRunnable() {
 			public void run() {
 				writeQueue();
+				if(killAfter) {
+					writeQueue();
+					try {
+						socket.close();
+					} catch (IOException ex) {}
+				}
 			}
 			public int fairHashCode() {
 				return clientHash;
@@ -196,10 +225,23 @@ public class Client<P extends Packet, S extends Server<P, ?>> {
 		this.runQueue = runQueue;
 		eventDispatcher = new DefaultEventDispatcher(runQueue);
 		packetDispatcher = new DefaultEventDispatcher(runQueue);
-		this.socket = new Pair(new DataInputStream(socket.getInputStream()), new DataOutputStream(socket.getOutputStream()));
+		this.socket = new Pair(new DataInputStream(socket.getInputStream()) {
+			@Override
+			public void close() throws IOException {
+				super.close();
+				socketImpl.close();
+			}
+		}, new DataOutputStream(socket.getOutputStream()) {
+			@Override
+			public void close() throws IOException {
+				super.close();
+				socketImpl.close();
+			}
+		});
 		this.packetRegistry = packetRegistry;
 		this.server = null;
 		
+		socketImpl = socket;
 		receiveThread.start();
 	}
 	public Client(String host, int port, Protocol protocol, RunQueue runQueue, PacketTransport packetRegistry) throws IOException {
@@ -220,7 +262,7 @@ public class Client<P extends Packet, S extends Server<P, ?>> {
 		for(final P packet : packets)
 			shutdown.ifRun(new Runnable() {
 				public void run() {
-					packet.failedToComplete(Client.this, new DisconnectedException());
+					packet.failedToComplete(Client.this, new EOFException());
 				}
 			}, new Runnable() {
 				public void run() {
@@ -228,10 +270,12 @@ public class Client<P extends Packet, S extends Server<P, ?>> {
 						packet.aboutToSend(Client.this);
 						writePacket(packet);
 						packet.sendComplete(Client.this);
+					} catch (IOException t) {
+						packet.failedToComplete(Client.this, t);
+						Logger.exception(Logger.Level.Gears, t);
 					} catch (Throwable t) {
 						packet.failedToComplete(Client.this, t);
-						if(!(t instanceof SocketException))
-							Logger.exception(t);
+						Logger.exception(Logger.Level.Error, t);
 					}
 				}
 			});
@@ -271,8 +315,8 @@ public class Client<P extends Packet, S extends Server<P, ?>> {
 	}
 	
 	public void send(final P packet) {
-		if(shutdown.isFinished())
-			packet.failedToComplete(Client.this, new DisconnectedException());
+		if(killAfter || shutdown.isFinished())
+			packet.failedToComplete(Client.this, new EOFException());
 		else
 			try {
 				packetQueue.write(new Writer<ListAccessor<P>>() {
@@ -291,12 +335,26 @@ public class Client<P extends Packet, S extends Server<P, ?>> {
 		return isAlive.get();
 	}
 	
+	public void sendAndKill(final P packet) {
+		if(killAfter || shutdown.isFinished())
+			packet.failedToComplete(Client.this, new EOFException());
+		else
+			try {
+				packetQueue.write(new Writer<ListAccessor<P>>() {
+					@Override
+					public void write(ListAccessor<P> data) {
+						killAfter = true;
+						data.push(packet);
+						sendQueue.push(processSendQueue, RunQueue.Placement.ReplaceExisting);
+					}
+				});
+			} catch (InvocationTargetException ex) {
+				throw NXUtils.wrapRuntime(ex);
+			}
+	}
 	public void kill() {
 		try {
-			socket.i.close();
-		} catch (IOException ex) {}
-		try {
-			socket.v.close();
+			socketImpl.close();
 		} catch (IOException ex) {}
 	}
 

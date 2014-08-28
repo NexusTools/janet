@@ -19,10 +19,11 @@ import java.io.EOFException;
 import java.io.IOException;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
-import java.util.ArrayList;
+import java.util.logging.Level;
 import net.nexustools.data.buffer.basic.StrongTypeList;
 import net.nexustools.io.DataInputStream;
 import net.nexustools.io.DataOutputStream;
+import net.nexustools.utils.NXUtils;
 import net.nexustools.utils.Pair;
 import net.nexustools.utils.log.Logger;
 
@@ -60,17 +61,23 @@ public class DefaultPacketTransport<P extends Packet> implements PacketTransport
 	StrongTypeList<Entry> entryList = new StrongTypeList();
 	Entry[] registered;
 	
-	public void register(Class<? extends P> packetClass) throws NoSuchMethodException {
+	public void register(Class<? extends P> packetClass) {
 		if(entryList.length() >= 0xFFFF)
 			throw new RuntimeException("There is a limit of 0xFFFF packet types, to add more make SubPackets or override the nextPacket method with your own implementation.");
-		entryList.push(new Entry(packetClass.getConstructor(), packetClass));
+		try {
+			entryList.push(new Entry(packetClass.getConstructor(), packetClass));
+		} catch (NoSuchMethodException ex) {
+			throw NXUtils.wrapRuntime(ex);
+		} catch (SecurityException ex) {
+			throw NXUtils.wrapRuntime(ex);
+		}
 	}
 	
-	public int idFor(P packet) throws NoSuchMethodException {
+	public int idFor(P packet) {
 		return idFor((Class<? extends P>)packet.getClass());
 	}
 	
-	public int idFor(Class<? extends P> packetClass) throws NoSuchMethodException {
+	public int idFor(Class<? extends P> packetClass) {
 		int pos = 0;
 		for(Entry entry : registered) {
 			if(entry.v == packetClass)
@@ -84,27 +91,23 @@ public class DefaultPacketTransport<P extends Packet> implements PacketTransport
 	public P read(DataInputStream inStream, Client<P, ?> client) throws IOException {
 		Logger.gears("Waiting for packet", this);
 		int packetID;
-		try {
-			switch(packetIDType) {
-				case Integer:
-					packetID = inStream.readInt();
-					break;
+		switch(packetIDType) {
+			case Integer:
+				packetID = inStream.readInt();
+				break;
 
-				case Short:
-					packetID = inStream.readShort();
-					break;
+			case Short:
+				packetID = inStream.readShort();
+				break;
 
-				case Byte:
-					packetID = inStream.read();
-					if(packetID < 0)
-						throw new DisconnectedException();
-					break;
-					
-				default:
-					throw new UnsupportedOperationException();
-			}
-		} catch(EOFException eof) {
-			throw new DisconnectedException(eof);
+			case Byte:
+				packetID = inStream.read();
+				if(packetID < 0)
+					throw new EOFException();
+				break;
+
+			default:
+				throw new UnsupportedOperationException();
 		}
 		Logger.gears("Reading packet", packetID);
 		P packet = create(packetID);
@@ -117,7 +120,7 @@ public class DefaultPacketTransport<P extends Packet> implements PacketTransport
 		return packet;
 	}
 	
-	public void write(DataOutputStream outStream, Client<P, ?> client, P packet) throws IOException, NoSuchMethodException {
+	public void write(DataOutputStream outStream, Client<P, ?> client, P packet) throws IOException {
 		int packetID = idFor(packet);
 		Logger.gears("Writing Packet", packetID, packet);
 
@@ -165,13 +168,13 @@ public class DefaultPacketTransport<P extends Packet> implements PacketTransport
 		try {
 			return (P)registered[id].i.newInstance();
 		} catch (InstantiationException ex) {
-			throw new RuntimeException(ex);
+			throw NXUtils.wrapRuntime(ex);
 		} catch (IllegalAccessException ex) {
-			throw new RuntimeException(ex);
+			throw NXUtils.wrapRuntime(ex);
 		} catch (IllegalArgumentException ex) {
-			throw new RuntimeException(ex);
+			throw NXUtils.wrapRuntime(ex);
 		} catch (InvocationTargetException ex) {
-			throw new RuntimeException(ex);
+			throw NXUtils.wrapRuntime(ex);
 		} catch (IndexOutOfBoundsException ex) {
 			throw new RuntimeException("Packet ID not registered: " + id);
 		}

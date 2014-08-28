@@ -7,6 +7,7 @@
 package net.nexustools.janet;
 
 import java.io.IOException;
+import java.net.SocketException;
 import net.nexustools.io.DataInputStream;
 import net.nexustools.io.DataOutputStream;
 
@@ -17,26 +18,43 @@ import net.nexustools.io.DataOutputStream;
 public abstract class SimplePacketTransport<P extends Packet> implements PacketTransport<P> {
 
 	public void lock() {}
-	public void register(Class<? extends P> packetClass) throws NoSuchMethodException {
+	public void register(Class<? extends P> packetClass) {
 		throw new UnsupportedOperationException("Not supported yet.");
 	}
 
-	public int idFor(Packet packet) throws NoSuchMethodException {
+	public int idFor(Packet packet) {
 		throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
 	}
 
-	public int idFor(Class<? extends P> packetClass) throws NoSuchMethodException {
+	public int idFor(Class<? extends P> packetClass) {
 		throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+	}
+	
+	protected void handleException(Client client, Throwable t) {
+		client.kill();
 	}
 
 	public P read(DataInputStream inStream, Client client) throws IOException {
-		final P packet = create(0);
-		readPayload(inStream, client, packet);
-		return packet;
+		try {
+			final P packet = create(0);
+			readPayload(inStream, client, packet);
+			return packet;
+		} catch(IOException ex) {
+			throw ex;
+		} catch(Throwable t) {
+			handleException(client, t);
+			return null;
+		}
 	}
 
-	public void write(DataOutputStream outStream, Client client, Packet packet) throws IOException, NoSuchMethodException {
-		writePayload(outStream, client, packet);
+	public void write(DataOutputStream outStream, Client client, Packet packet) throws IOException {
+		try {
+			writePayload(outStream, client, packet);
+		} catch(IOException ex) {
+			throw ex;
+		} catch(Throwable t) {
+			handleException(client, t);
+		}
 	}
 
 	public void writePayload(DataOutputStream outStream, Client client, Packet packet) throws UnsupportedOperationException, IOException {

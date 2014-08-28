@@ -6,17 +6,17 @@
 
 package net.nexustools.web.http;
 
+import java.io.EOFException;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import net.nexustools.data.buffer.basic.StringList;
 import net.nexustools.io.InputLineReader;
 import net.nexustools.io.LineReader;
-import net.nexustools.janet.DisconnectedException;
-import net.nexustools.web.WebHeaders;
 import net.nexustools.utils.Pair;
 import net.nexustools.utils.log.Logger;
+import net.nexustools.web.WebHeaders;
 
 /**
  *
@@ -27,14 +27,14 @@ public class HTTPHeaders extends WebHeaders {
 	protected static final Pattern headerPattern = Pattern.compile("^([a-z][a-z0-9_\\-]*): (.+)$", Pattern.CASE_INSENSITIVE);
 	
 	public void parse(InputStream inputStream) throws IOException {
-		parse(inputStream, new InputLineReader(inputStream) {});
+		parse(new InputLineReader(inputStream));
 	}
-	public void parse(InputStream inputStream, LineReader lineReader) throws IOException {
+	public void parse(LineReader lineReader) throws IOException {
 		String line;
         while(true) {
 			Logger.gears(line = lineReader.readNext());
             if(line == null)
-                throw new DisconnectedException();
+                throw new EOFException();
             if(line.trim().length() < 1)
                 break;
             
@@ -46,8 +46,8 @@ public class HTTPHeaders extends WebHeaders {
         }
 	}
 
-	static void write(WebHeaders headers, StringBuilder headerBuilder) {
-		for(Pair<String,List<String>> bundle : headers) {
+	static void write(WebHeaders headers, Appendable headerBuilder) throws IOException {
+		for(Pair<String,StringList> bundle : headers) {
 			for(String value : bundle.v) {
 				String key = bundle.i;
 				key = key.substring(0, 1).toUpperCase() + key.substring(1);

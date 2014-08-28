@@ -12,9 +12,7 @@ import net.nexustools.concurrent.Prop;
 import net.nexustools.janet.Server.Protocol;
 import net.nexustools.runtime.RunQueue;
 import net.nexustools.runtime.ThreadedRunQueue;
-import net.nexustools.utils.NXUtils;
 import net.nexustools.utils.Testable;
-import net.nexustools.web.handlers.FileRequestHandler;
 import net.nexustools.web.handlers.JoomlaRequestHandler;
 import net.nexustools.web.handlers.MatchRequestHandler;
 import net.nexustools.web.handlers.PHPFileRequestHandler;
@@ -54,40 +52,24 @@ public class JaWebSrv extends DefaultAppDelegate {
     }
 
     @Override
-    protected void launch(String[] args) {
-		MatchRequestHandler matchModule = new MatchRequestHandler(new PHPRequestHandler("/var/www/parked", "index.php"));
+    protected Runnable launch(String[] args) throws IOException {
 		
-		try {
-			final HTTPServer webServer = new HTTPServer(matchModule/*new FileRequestHandler("/")*/, port, protocol, queue());
-			mainLoop.set(new Runnable() {
-				public void run() {
-					while(true)
-						try {
-							webServer.join();
-							break;
-						} catch (InterruptedException ex) {}
-				}
-			});
-		} catch (IOException ex) {
-			mainLoop.set(new Runnable() {
-				public void run() {}
-			});
-			throw NXUtils.wrapRuntime(ex);
-		}
+		final HTTPServer webServer = new HTTPServer(
+				new PHPFileRequestHandler("/")
+				, port, protocol, queue());
+		return new Runnable() {
+			public void run() {
+				while(true)
+					try {
+						webServer.join();
+						break;
+					} catch (InterruptedException ex) {}
+			}
+		};
 	}
 
     public boolean needsMainLoop() {
         return false;
-    }
-
-	@Override
-    public void mainLoop() {
-		while(!mainLoop.isTrue())
-			try {
-				Thread.sleep(5000);
-			} catch (InterruptedException ex) {}
-		
-        mainLoop.get().run();
     }
     
 }

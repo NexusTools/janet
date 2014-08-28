@@ -10,13 +10,14 @@ import java.io.IOException;
 import java.io.InputStream;
 import net.nexustools.janet.Client;
 import net.nexustools.janet.SimplePacketTransport;
+import net.nexustools.runtime.RunQueue;
+import net.nexustools.web.SimpleWebRequest;
 import net.nexustools.web.WebHeaders;
 import net.nexustools.web.WebPacket;
 import net.nexustools.web.WebRequest;
 import net.nexustools.web.WebResponse;
 import net.nexustools.web.WebServer;
 import net.nexustools.web.handlers.WebRequestHandler;
-import net.nexustools.runtime.RunQueue;
 
 /**
  *
@@ -28,6 +29,10 @@ public class HTTPServer<P extends WebPacket, C extends Client<P, ? extends HTTPS
 		final RunQueue runQueue;
 		public HTTPTransport(RunQueue runQueue) {
 			this.runQueue = runQueue;
+		}
+		@Override
+		protected void handleException(Client client, Throwable t) {
+			client.sendAndKill(((WebServer)client.server()).exceptionResponse(t, new SimpleWebRequest("/")));
 		}
 		@Override
 		public WebPacket create(int id) {

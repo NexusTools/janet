@@ -6,10 +6,11 @@
 
 package net.nexustools.web.handlers;
 
+import net.nexustools.data.buffer.basic.ByteArrayBuffer;
+import net.nexustools.utils.Pair;
 import net.nexustools.web.WebRequest;
 import net.nexustools.web.WebResponse;
 import net.nexustools.web.WebServer;
-import net.nexustools.utils.Pair;
 
 /**
  *
@@ -29,8 +30,8 @@ public class RedirectRequestHandler implements WebRequestHandler {
 	}
 
 	public static WebResponse createResponse(String location, boolean perminent, WebServer server, WebRequest request) {
-		StringBuilder builder = new StringBuilder();
-		return server.createResponse(perminent ? 301 : 302, builder.toString(), false, request, new Pair<String, String>("Location", location));
+		ByteArrayBuffer arrayBuffer = new ByteArrayBuffer();
+		return server.createResponse(perminent ? 301 : 302, "text/html", arrayBuffer.take(), request, new Pair<String, String>("Location", location));
 	}
 
 	public static WebResponse createResponse(String location, WebServer server, WebRequest request) {

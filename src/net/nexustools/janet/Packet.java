@@ -17,12 +17,12 @@ package net.nexustools.janet;
 
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
-import java.util.logging.Level;
 import net.nexustools.concurrent.Prop;
 import net.nexustools.data.accessor.PropAccessor;
 import net.nexustools.concurrent.logic.SoftWriteReader;
 import net.nexustools.data.adaptor.Adaptor;
 import net.nexustools.data.adaptor.AdaptorException;
+import net.nexustools.data.annote.ThreadUnsafe;
 import net.nexustools.io.DataInputStream;
 import net.nexustools.io.DataOutputStream;
 import net.nexustools.io.MemoryStream;
@@ -33,6 +33,7 @@ import net.nexustools.utils.log.Logger;
  *
  * @author kate
  */
+@ThreadUnsafe
 public abstract class Packet<T, C extends Client, S extends Server> {
 	
 	private final Prop<byte[]> cache = new Prop();

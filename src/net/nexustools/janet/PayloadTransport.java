@@ -6,7 +6,6 @@
 
 package net.nexustools.janet;
 
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import net.nexustools.io.DataInputStream;
 import net.nexustools.io.DataOutputStream;

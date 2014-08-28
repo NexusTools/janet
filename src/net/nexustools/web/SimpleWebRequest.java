@@ -6,6 +6,8 @@
 
 package net.nexustools.web;
 
+import net.nexustools.io.Stream;
+import net.nexustools.io.TemporaryFileStream;
 import net.nexustools.utils.ArgumentMap;
 
 /**
@@ -17,6 +19,7 @@ public class SimpleWebRequest extends WebRequest {
 	private final String path;
 	private final String method;
 	private final WebHeaders headers;
+	private final ArgumentMap args = new ArgumentMap();
 	public SimpleWebRequest(String path, WebHeaders headers) {
 		this("GET", path, headers);
 	}
@@ -31,32 +34,55 @@ public class SimpleWebRequest extends WebRequest {
 
 	@Override
 	public String method() {
-		throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+		return method;
 	}
 
 	@Override
 	public String path() {
-		throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+		return path;
 	}
 
 	@Override
 	public WebHeaders headers() {
-		throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+		return headers;
 	}
 
 	@Override
 	public String requestURI() {
-		throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+		String get = requestString(Scope.GET);
+		if(get == null)
+			return path;
+		return path + '?' + get;
 	}
 
 	@Override
 	public ArgumentMap arguments(Scope scope) {
-		throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+		return args;
 	}
 
 	@Override
 	public boolean acceptsEncoding(String encoding) {
 		return false;
+	}
+
+	@Override
+	public long payloadLength() {
+		return 0;
+	}
+
+	@Override
+	public String payloadType() {
+		return null;
+	}
+
+	@Override
+	public Stream payload() {
+		return Stream.Void();
+	}
+
+	@Override
+	public Stream payloadFile(String name) {
+		return null;
 	}
 	
 }

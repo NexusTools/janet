@@ -8,13 +8,13 @@ package net.nexustools.web.http;
 
 import java.io.IOException;
 import java.io.InputStream;
-
+import net.nexustools.data.buffer.basic.ByteArrayBuffer;
 import net.nexustools.io.DataOutputStream;
 import net.nexustools.janet.Client;
+import net.nexustools.utils.log.Logger;
 import net.nexustools.web.WebHeaders;
 import net.nexustools.web.WebResponse;
-import net.nexustools.utils.StringUtils;
-import net.nexustools.utils.log.Logger;
+import net.nexustools.web.io.ChunkedEncodingInputStream;
 
 /**
  *
@@ -46,34 +46,42 @@ public class HTTPResponse<T, C extends Client, S extends HTTPServer> extends Web
     @Override
     public void write(DataOutputStream dataOutput, C client) throws UnsupportedOperationException, IOException {
 		String connection = headers.get("connection");
-		//if(connection == null)
-			headers.set("connection", connection = "close");
+		if(connection == null)
+			headers.set("connection", connection = "Keep-Alive");
 		
-		boolean close = !connection.equalsIgnoreCase("keep-alive");
+		InputStream payloadReader = payload;
+		if(!headers.has("Content-Encoding")) {
+			
+		}
+		
+		boolean close = connection.equalsIgnoreCase("close");
+		if(!close && Integer.valueOf(headers.get("Content-Length", "0")) < 1 && !headers.has("Transfer-Encoding")) {
+			headers.set("Transfer-Encoding", "chunked");
+			payloadReader = new ChunkedEncodingInputStream(payloadReader);
+		}
+		
 		Logger.debug("Writing Headers", headers);
         {
-            StringBuilder headerBuilder = new StringBuilder();
+            ByteArrayBuffer headerData = new ByteArrayBuffer();
+			Appendable headerBuilder = headerData.createAppendable();
             headerBuilder.append("HTTP/1.1 ");
-            headerBuilder.append(status);
+            headerBuilder.append(String.valueOf(status));
             headerBuilder.append(' ');
             headerBuilder.append(statusString);
             headerBuilder.append("\r\n");
 			
 			HTTPHeaders.write(headers, headerBuilder);
-            dataOutput.write(headerBuilder.toString().getBytes(StringUtils.UTF8));
+            dataOutput.write(headerData.take());
         }
         
         int read;
         byte[] buffer = new byte[1024 * 1024 * 4]; // 4MB Buffer
-        while((read = payload.read(buffer)) > 0)
+        while((read = payloadReader.read(buffer)) > 0)
             dataOutput.write(buffer, 0, read);
 
-		//if(close)
+		dataOutput.flush();
+		if(close)
 			dataOutput.close();
-		//else {
-		//	dataOutput.write(WebServer.LR);
-		//	dataOutput.flush();
-		//}
     }
 
 	@Override

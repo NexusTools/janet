@@ -26,16 +26,16 @@ import net.nexustools.io.DataOutputStream;
 public interface PacketTransport<P extends Packet> {
 	
 	public void lock();
-	public void register(Class<? extends P> packetClass) throws NoSuchMethodException;
+	public void register(Class<? extends P> packetClass);
 	
 	public int idFor(P packet) throws NoSuchMethodException;
-	public int idFor(Class<? extends P> packetClass) throws NoSuchMethodException;
+	public int idFor(Class<? extends P> packetClass);
 	
 	public P read(DataInputStream inStream, Client<P, ?> client) throws IOException;
-	public void write(DataOutputStream outStream, Client<P, ?> client, P packet) throws IOException, NoSuchMethodException;
+	public void write(DataOutputStream outStream, Client<P, ?> client, P packet) throws IOException;
 	
-	public void writePayload(DataOutputStream outStream, Client<P, ?> client, P packet) throws UnsupportedOperationException, IOException;
-	public void readPayload(DataInputStream inStream, Client<P, ?> client, P packet) throws UnsupportedOperationException, IOException;
+	public void writePayload(DataOutputStream outStream, Client<P, ?> client, P packet) throws IOException;
+	public void readPayload(DataInputStream inStream, Client<P, ?> client, P packet) throws IOException;
 	
 	public P create(int id);
 	

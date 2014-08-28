@@ -115,7 +115,7 @@ public class StreamRequestHandler implements WebRequestHandler {
 				String format = request.headers().get("format", "html");
 				
 				if(format.equalsIgnoreCase("html"))
-					server.listingHTMLContent(builder, stream, request.arguments(WebRequest.Scope.GET_POST), path, authGET);
+					server.directoryListing(builder, stream, request.arguments(WebRequest.Scope.GET_POST), path, authGET);
 				else
 					throw new UnsupportedOperationException("The requested format is not supported: " + format);
 				

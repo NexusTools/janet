@@ -9,6 +9,7 @@ package net.nexustools.web;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URISyntaxException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import net.nexustools.Application;
@@ -120,7 +121,7 @@ public abstract class WebServer<P extends WebPacket, C extends Client<P, ? exten
 		return "???";
 	}
 	
-	public void listingHTMLContent(StringBuilder builder, Stream stream, ArgumentMap arguments, String path, String authGET) throws IOException {
+	public void directoryListing(Appendable builder, Stream stream, ArgumentMap arguments, String path, String authGET) throws IOException {
 		builder.append("<table><tr><th></th><th>Filename</th><th>Type</th><th>Last Modified</th><th>Size</th></tr>");
 		
 		{
@@ -161,6 +162,7 @@ public abstract class WebServer<P extends WebPacket, C extends Client<P, ? exten
 			try {
 				if(childStream.isDirectory()) {
 					mimeType = "inode/directory";
+					childPath += "/";
 					type = "folder";
 				} else {
 					mimeType = childStream.mimeType();
@@ -260,7 +262,6 @@ public abstract class WebServer<P extends WebPacket, C extends Client<P, ? exten
 	}
 	
 	public final WebResponse exceptionResponse(Throwable t, WebRequest request) {
-		Logger.exception(Logger.Level.Debug, t);
 		return systemPage(500, t.getClass().getSimpleName(), "<pre>" + StringUtils.stringForException(t) + "</pre>", request);
 	}
 	public final WebResponse standardResponse(int code, WebRequest request) {
@@ -292,8 +293,10 @@ public abstract class WebServer<P extends WebPacket, C extends Client<P, ? exten
 				html.append("<style>\n");
 				html.append(source);
 				html.append("</style>");
-			} catch (Throwable t) {
-				Logger.exception(Logger.Level.Debug, t);
+			} catch (IOException t) {
+				Logger.exception(Logger.Level.Warning, t);
+			} catch (URISyntaxException t) {
+				Logger.exception(Logger.Level.Warning, t);
 			}
 		}
 		
@@ -308,8 +311,10 @@ public abstract class WebServer<P extends WebPacket, C extends Client<P, ? exten
 				html.append("<script>\n");
 				html.append(source);
 				html.append("</script>");
-			} catch (Throwable t) {
-				Logger.exception(Logger.Level.Gears, t);
+			} catch (IOException t) {
+				Logger.exception(Logger.Level.Warning, t);
+			} catch (URISyntaxException t) {
+				Logger.exception(Logger.Level.Warning, t);
 			}
 		}
 		
@@ -441,22 +446,15 @@ public abstract class WebServer<P extends WebPacket, C extends Client<P, ? exten
 		headers.set("Server", serverName());
 		headers.set("Date", dateFormat.format(new Date()));
 		
-		if(request.method().equalsIgnoreCase("head"))
+		if(request.method().equalsIgnoreCase("head")) {
+			headers.remove("Content-Length");
 			payload = new InputStream() {
 				@Override
 				public int read() throws IOException {
 					return -1;
 				}
 			};
-		else {
-			if(Integer.valueOf(headers.get("Content-Length", "0")) <= 0 && !headers.has("Transfer-Encoding")) {
-				headers.set("Transfer-Encoding", "chunked");
-				headers.set("Connection", "keep-alive");
-				
-				payload = new ChunkedEncodingInputStream(payload);
-			}
 		}
-		
 		
 		return createResponseImpl(code, codeMessage, headers, payload, request);
 	}

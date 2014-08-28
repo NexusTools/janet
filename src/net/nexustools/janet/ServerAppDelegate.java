@@ -62,74 +62,47 @@ public abstract class ServerAppDelegate<C extends Client, S extends Server> exte
 
     protected void launchServer(S server) {}
 
-    protected void launch(String[] args) {
-        try {
-            int id = 0;
-            Logger.quote(Logger.Level.Debug, "Poluating Packet Registry for", this);
-            populate(packetRegistry);
-            packetRegistry.lock();
+    protected Runnable launch(String[] args) throws NoSuchMethodException, IOException {
+		int id = 0;
+		Logger.quote(Logger.Level.Debug, "Poluating Packet Registry for", this);
+		populate(packetRegistry);
+		packetRegistry.lock();
+
+		if (args.length == 2) {
+			Logger.gears("Creating Client", args);
+			final C client = createClient(args[0], Integer.valueOf(args[1]));
+			Logger.gears("Installing Client MainLoop", args);
+			Logger.debug("Launching Client", client);
+			launchClient(client);
 			
-            if (args.length == 2) {
-                Logger.gears("Creating Client", args);
-                final C client = createClient(args[0], Integer.valueOf(args[1]));
-                Logger.gears("Installing Client MainLoop", args);
-                mainLoop.set(new Runnable() {
-                    public void run() {
-                        Logger.gears("Waiting for Client to Disconnect", client);
-                        client.shutdown.waitFor();
-                    }
-                });
-                Logger.debug("Launching Client", client);
-                launchClient(client);
-            } else if (args.length == 1) {
-                Logger.gears("Creating Server", args);
-                final S server = createServer(Integer.valueOf(args[0]));
-                Logger.gears("Installing Server MainLoop", args);
-                mainLoop.set(new Runnable() {
-                    public void run() {
-                        while (server.isAlive())
-                            try {
-                                server.join();
-                            } catch (InterruptedException ex) {}
-                    }
-                });
-                Logger.debug("Launching Server", server);
-                launchServer(server);
-            } else {
-                throw new UnsupportedOperationException("Required 1 or 2 arguments, (HOST PORT) or (PORT)");
-            }
-        } catch (Throwable t) {
-            mainLoop.set(new Runnable() {
-                public void run() {}
-            });
-            throw new RuntimeException(t);
-        }
-    }
-
-    public void mainLoop() {
-        Thread myself = Thread.currentThread();
-        String oldName = myself.getName();
-        myself.setName(getClass().getSimpleName() + "-MainLoop");
-
-        Logger.gears("Waiting for MainLoop");
-        while (!mainLoop.isset()) {
-            try {
-                Thread.sleep(150);
-            } catch (InterruptedException ex) {}
-        }
-
-        Logger.gears("Entering ServerAppDelegate MainLoop");
-        mainLoop.get().run();
-        Logger.gears("Exiting ServerAppDelegate MainLoop");
-        myself.setName(oldName);
+			return new Runnable() {
+				public void run() {
+					Logger.gears("Waiting for Client to Disconnect", client);
+					client.shutdown.waitFor();
+				}
+			};
+		} else if (args.length == 1) {
+			Logger.gears("Creating Server", args);
+			final S server = createServer(Integer.valueOf(args[0]));
+			Logger.gears("Installing Server MainLoop", args);
+			Logger.debug("Launching Server", server);
+			launchServer(server);
+			
+			return new Runnable() {
+				public void run() {
+					while (server.isAlive())
+						try {
+							server.join();
+						} catch (InterruptedException ex) {}
+				}
+			};
+		} else {
+			throw new UnsupportedOperationException("Required 1 or 2 arguments, (HOST PORT) or (PORT)");
+		}
     }
 
     public boolean needsMainLoop() {
         return false;
-    }
-
-    public String pathUri(Path path) {
-        return null;
     }
 
 }
